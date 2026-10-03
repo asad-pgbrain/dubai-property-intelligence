@@ -24,7 +24,10 @@ data/processed/
 data/quarantine/
 
 # IDE
-.vscode/
+# .vscode/  ← comment out karein
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
 .idea/
 *.swp
 
