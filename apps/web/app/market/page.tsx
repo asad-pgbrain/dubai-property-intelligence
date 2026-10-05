@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import Header from "@/components/Header";
+import MonthlyChart from "@/components/MonthlyChart";
 import { getMarketOverview } from "@/lib/api";
 
 export const metadata: Metadata = {
@@ -8,11 +9,6 @@ export const metadata: Metadata = {
   description:
     "Dubai real estate market overview: total transactions, median prices, monthly trends, and top areas. Based on official Dubai Land Department data.",
 };
-
-function formatAED(value: number | null | undefined): string {
-  if (value == null) return "-";
-  return new Intl.NumberFormat("en-US").format(Math.round(value));
-}
 
 function formatCompact(value: number | null | undefined): string {
   if (value == null) return "-";
@@ -26,11 +22,6 @@ function slugify(name: string): string {
   return name.toLowerCase().trim().replace(/\s+/g, "-");
 }
 
-function formatMonth(month: string): string {
-  const d = new Date(month);
-  return d.toLocaleDateString("en-US", { month: "short", year: "2-digit" });
-}
-
 export default async function MarketPage() {
   let data;
   let error: string | null = null;
@@ -40,10 +31,6 @@ export default async function MarketPage() {
   } catch (e) {
     error = e instanceof Error ? e.message : "Failed to load market data";
   }
-
-  const maxCount = data
-    ? Math.max(...data.monthly_trend.map((m) => m.transaction_count))
-    : 1;
 
   return (
     <div className="min-h-screen bg-zinc-50">
@@ -106,37 +93,20 @@ export default async function MarketPage() {
 
             <div className="bg-white rounded-2xl p-6 md:p-8 border border-zinc-200 mb-10">
               <div className="flex items-baseline justify-between mb-6">
-                <h2 className="text-lg font-semibold text-zinc-900">
-                  Monthly Sales Activity
-                </h2>
+                <div>
+                  <h2 className="text-lg font-semibold text-zinc-900">
+                    Monthly Sales Activity
+                  </h2>
+                  <p className="text-xs text-zinc-500 mt-1">
+                    Transaction count (bars) and total volume in AED millions (line)
+                  </p>
+                </div>
                 <span className="text-xs text-zinc-500">
                   {data.monthly_trend.length} months
                 </span>
               </div>
 
-              <div className="flex items-end gap-2 md:gap-4 h-48">
-                {data.monthly_trend.map((row) => {
-                  const heightPct = (row.transaction_count / maxCount) * 100;
-                  return (
-                    <div
-                      key={row.month}
-                      className="flex-1 flex flex-col items-center gap-2"
-                    >
-                      <div className="text-[10px] md:text-xs font-semibold text-zinc-700">
-                        {row.transaction_count.toLocaleString()}
-                      </div>
-                      <div
-                        className="w-full bg-blue-500 hover:bg-blue-600 rounded-t transition-all"
-                        style={{ height: `${Math.max(heightPct, 2)}%` }}
-                        title={`${row.transaction_count.toLocaleString()} sales, AED ${formatCompact(row.volume_aed)}`}
-                      ></div>
-                      <div className="text-[10px] md:text-xs text-zinc-500 whitespace-nowrap">
-                        {formatMonth(row.month)}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+              <MonthlyChart data={data.monthly_trend} />
             </div>
 
             <div className="bg-white rounded-2xl border border-zinc-200 overflow-hidden">
