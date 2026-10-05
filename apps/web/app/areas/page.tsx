@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import Header from "@/components/Header";
 import { listAreas, type AreaSummary } from "@/lib/api";
 
 export const metadata: Metadata = {
@@ -39,23 +40,7 @@ export default async function AreasPage() {
 
   return (
     <div className="min-h-screen bg-zinc-50">
-      <header className="border-b border-zinc-200 bg-white sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2.5">
-            <div className="w-9 h-9 bg-blue-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-xs tracking-tight">DPI</span>
-            </div>
-            <span className="font-semibold text-zinc-900 text-sm">
-              Dubai Property Intelligence
-            </span>
-          </Link>
-          <nav className="hidden md:flex items-center gap-8 text-sm text-zinc-600">
-            <Link href="/market" className="hover:text-zinc-900">Market</Link>
-            <Link href="/areas" className="text-zinc-900 font-medium">Areas</Link>
-            <Link href="/methodology" className="hover:text-zinc-900">Methodology</Link>
-          </nav>
-        </div>
-      </header>
+      <Header />
 
       <main className="max-w-7xl mx-auto px-6 py-12">
         <div className="mb-10">

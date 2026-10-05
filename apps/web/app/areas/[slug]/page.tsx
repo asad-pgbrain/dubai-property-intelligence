@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import Header from "@/components/Header";
+import Footer from "@/components/Footer";
 import { getAreaDetail } from "@/lib/api";
 
 interface PageProps {
@@ -41,23 +43,7 @@ export default async function AreaDetailPage({ params }: PageProps) {
 
   return (
     <div className="min-h-screen bg-zinc-50">
-      <header className="border-b border-zinc-200 bg-white sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2.5">
-            <div className="w-9 h-9 bg-blue-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-xs tracking-tight">DPI</span>
-            </div>
-            <span className="font-semibold text-zinc-900 text-sm">
-              Dubai Property Intelligence
-            </span>
-          </Link>
-          <nav className="hidden md:flex items-center gap-8 text-sm text-zinc-600">
-            <Link href="/market" className="hover:text-zinc-900">Market</Link>
-            <Link href="/areas" className="text-zinc-900 font-medium">Areas</Link>
-            <Link href="/methodology" className="hover:text-zinc-900">Methodology</Link>
-          </nav>
-        </div>
-      </header>
+      <Header />
 
       <main className="max-w-7xl mx-auto px-6 py-12">
         <nav className="text-sm text-zinc-500 mb-6">
@@ -97,25 +83,33 @@ export default async function AreaDetailPage({ params }: PageProps) {
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
               <div>
-                <div className="text-xs text-zinc-500 uppercase tracking-wide mb-2">Median Price</div>
+                <div className="text-xs text-zinc-500 uppercase tracking-wide mb-2">
+                  Median Price
+                </div>
                 <div className="text-2xl font-bold text-zinc-900">
                   AED {formatAED(primary.median_price_aed)}
                 </div>
               </div>
               <div>
-                <div className="text-xs text-zinc-500 uppercase tracking-wide mb-2">AED / sqft</div>
+                <div className="text-xs text-zinc-500 uppercase tracking-wide mb-2">
+                  AED / sqft
+                </div>
                 <div className="text-2xl font-bold text-zinc-900">
                   {formatAED(primary.median_aed_sqft)}
                 </div>
               </div>
               <div>
-                <div className="text-xs text-zinc-500 uppercase tracking-wide mb-2">Transactions</div>
+                <div className="text-xs text-zinc-500 uppercase tracking-wide mb-2">
+                  Transactions
+                </div>
                 <div className="text-2xl font-bold text-zinc-900">
                   {primary.transaction_count.toLocaleString()}
                 </div>
               </div>
               <div>
-                <div className="text-xs text-zinc-500 uppercase tracking-wide mb-2">25th - 75th</div>
+                <div className="text-xs text-zinc-500 uppercase tracking-wide mb-2">
+                  25th - 75th
+                </div>
                 <div className="text-sm font-semibold text-zinc-700">
                   AED {formatAED(primary.p25_price_aed)} - {formatAED(primary.p75_price_aed)}
                 </div>
@@ -195,6 +189,8 @@ export default async function AreaDetailPage({ params }: PageProps) {
           Source: {detail.source.name} - {detail.source.dataset} dataset. Sales only. Not investment advice.
         </div>
       </main>
+
+      <Footer />
     </div>
   );
 }

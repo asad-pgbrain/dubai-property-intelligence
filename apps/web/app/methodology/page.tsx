@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import Header from "@/components/Header";
 
 export const metadata: Metadata = {
   title: "Data Methodology",
@@ -10,30 +11,9 @@ export const metadata: Metadata = {
 export default function MethodologyPage() {
   return (
     <div className="min-h-screen bg-white">
-      {/* Header */}
-      <header className="border-b border-zinc-200">
-        <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2.5">
-            <div className="w-9 h-9 bg-blue-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-xs tracking-tight">
-                DPI
-              </span>
-            </div>
-            <span className="font-semibold text-zinc-900 text-sm">
-              Dubai Property Intelligence
-            </span>
-          </Link>
-          <Link
-            href="/"
-            className="text-sm text-zinc-600 hover:text-zinc-900"
-          >
-            ← Back to home
-          </Link>
-        </div>
-      </header>
+      <Header />
 
       <main className="max-w-4xl mx-auto px-6 py-12 md:py-16">
-        {/* Hero */}
         <div className="mb-12">
           <h1 className="text-3xl md:text-4xl font-bold text-zinc-900 mb-4 tracking-tight">
             Data Methodology
@@ -45,9 +25,7 @@ export default function MethodologyPage() {
           </p>
         </div>
 
-        {/* Sections */}
         <div className="space-y-10">
-          {/* Source */}
           <section>
             <h2 className="text-xl font-semibold text-zinc-900 mb-3">
               1. Data Source
@@ -75,7 +53,6 @@ export default function MethodologyPage() {
             </div>
           </section>
 
-          {/* Current coverage */}
           <section>
             <h2 className="text-xl font-semibold text-zinc-900 mb-3">
               2. Current Data Coverage
@@ -120,23 +97,18 @@ export default function MethodologyPage() {
                   <dt className="text-xs uppercase tracking-wide text-zinc-500 mb-1">
                     Last updated
                   </dt>
-                  <dd className="text-zinc-900 font-medium">
-                    October 2026
-                  </dd>
+                  <dd className="text-zinc-900 font-medium">October 2026</dd>
                 </div>
               </dl>
             </div>
           </section>
 
-          {/* Transaction types */}
           <section>
             <h2 className="text-xl font-semibold text-zinc-900 mb-3">
               3. What We Include and Exclude
             </h2>
             <div className="text-zinc-700 leading-relaxed space-y-3">
-              <p>
-                The DLD Transactions dataset contains three types of records:
-              </p>
+              <p>The DLD Transactions dataset contains three types of records:</p>
               <ul className="list-disc pl-6 space-y-2">
                 <li>
                   <strong>Sales</strong> — actual market sales between buyers
@@ -161,7 +133,6 @@ export default function MethodologyPage() {
             </div>
           </section>
 
-          {/* Calculations */}
           <section>
             <h2 className="text-xl font-semibold text-zinc-900 mb-3">
               4. How We Calculate
@@ -221,7 +192,6 @@ export default function MethodologyPage() {
             </div>
           </section>
 
-          {/* Data quality */}
           <section>
             <h2 className="text-xl font-semibold text-zinc-900 mb-3">
               5. Data Quality
@@ -247,7 +217,6 @@ export default function MethodologyPage() {
             </ul>
           </section>
 
-          {/* Limitations */}
           <section>
             <h2 className="text-xl font-semibold text-zinc-900 mb-3">
               6. Limitations
@@ -272,7 +241,6 @@ export default function MethodologyPage() {
             </div>
           </section>
 
-          {/* Attribution */}
           <section>
             <h2 className="text-xl font-semibold text-zinc-900 mb-3">
               7. Attribution & Licensing
@@ -285,7 +253,6 @@ export default function MethodologyPage() {
           </section>
         </div>
 
-        {/* CTA */}
         <div className="mt-16 pt-8 border-t border-zinc-200">
           <Link
             href="/"
@@ -295,13 +262,6 @@ export default function MethodologyPage() {
           </Link>
         </div>
       </main>
-
-      {/* Footer */}
-      <footer className="border-t border-zinc-200 bg-white mt-20">
-        <div className="max-w-4xl mx-auto px-6 py-6 text-xs text-zinc-500 text-center">
-          © 2026 Dubai Property Intelligence — Data-driven property research
-        </div>
-      </footer>
     </div>
   );
 }

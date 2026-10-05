@@ -167,3 +167,54 @@ export async function getMarketOverview(): Promise<MarketOverviewResponse> {
   }
   return res.json();
 }
+
+// ============================================================
+// Compare
+// ============================================================
+
+export interface CompareAreaRow {
+  area_name: string;
+  property_type: string;
+  transaction_count: number;
+  median_price_aed: number | null;
+  median_aed_sqft: number | null;
+  p25_price_aed: number | null;
+  p75_price_aed: number | null;
+  data_coverage: string;
+  first_transaction: string | null;
+  last_transaction: string | null;
+}
+
+export interface CompareResponse {
+  data: CompareAreaRow[];
+  missing: string[];
+  count: number;
+  source: { name: string; dataset: string };
+}
+
+export async function compareAreas(areas: string[]): Promise<CompareResponse> {
+  const params = new URLSearchParams();
+  areas.forEach((a) => params.append("areas", a));
+
+  const res = await fetch(`${API_BASE}/api/v1/compare?${params.toString()}`, {
+    cache: "no-store",
+  });
+  if (!res.ok) {
+    throw new Error(`API error: ${res.status}`);
+  }
+  return res.json();
+}
+
+export interface AreaSearchRow {
+  area_name: string;
+  total_transactions: number;
+}
+
+export async function searchAreas(q: string, limit = 20): Promise<{ data: AreaSearchRow[] }> {
+  const params = new URLSearchParams({ q, limit: String(limit) });
+  const res = await fetch(`${API_BASE}/api/v1/areas/search?${params.toString()}`, {
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`API error: ${res.status}`);
+  return res.json();
+}

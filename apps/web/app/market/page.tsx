@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import Header from "@/components/Header";
 import { getMarketOverview } from "@/lib/api";
 
 export const metadata: Metadata = {
@@ -46,23 +47,7 @@ export default async function MarketPage() {
 
   return (
     <div className="min-h-screen bg-zinc-50">
-      <header className="border-b border-zinc-200 bg-white sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2.5">
-            <div className="w-9 h-9 bg-blue-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-xs tracking-tight">DPI</span>
-            </div>
-            <span className="font-semibold text-zinc-900 text-sm">
-              Dubai Property Intelligence
-            </span>
-          </Link>
-          <nav className="hidden md:flex items-center gap-8 text-sm text-zinc-600">
-            <Link href="/market" className="text-zinc-900 font-medium">Market</Link>
-            <Link href="/areas" className="hover:text-zinc-900">Areas</Link>
-            <Link href="/methodology" className="hover:text-zinc-900">Methodology</Link>
-          </nav>
-        </div>
-      </header>
+      <Header />
 
       <main className="max-w-7xl mx-auto px-6 py-12">
         <div className="mb-10">
@@ -84,7 +69,6 @@ export default async function MarketPage() {
 
         {data && (
           <>
-            {/* KPI Cards */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
               <div className="bg-white rounded-2xl p-6 border border-zinc-200">
                 <div className="text-xs text-zinc-500 uppercase tracking-wide mb-2">
@@ -120,7 +104,6 @@ export default async function MarketPage() {
               </div>
             </div>
 
-            {/* Monthly Trend */}
             <div className="bg-white rounded-2xl p-6 md:p-8 border border-zinc-200 mb-10">
               <div className="flex items-baseline justify-between mb-6">
                 <h2 className="text-lg font-semibold text-zinc-900">
@@ -156,7 +139,6 @@ export default async function MarketPage() {
               </div>
             </div>
 
-            {/* Top Areas */}
             <div className="bg-white rounded-2xl border border-zinc-200 overflow-hidden">
               <div className="px-6 py-4 border-b border-zinc-100 flex items-baseline justify-between">
                 <h2 className="text-lg font-semibold text-zinc-900">
