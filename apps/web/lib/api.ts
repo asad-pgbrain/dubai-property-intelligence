@@ -218,3 +218,32 @@ export async function searchAreas(q: string, limit = 20): Promise<{ data: AreaSe
   if (!res.ok) throw new Error(`API error: ${res.status}`);
   return res.json();
 }
+
+// ============================================================
+// Area Monthly Trend
+// ============================================================
+
+export interface AreaMonthlyRow {
+  month: string;
+  transaction_count: number;
+  volume_aed: number;
+  median_price_aed: number;
+}
+
+export interface AreaMonthlyResponse {
+  area: string;
+  data: AreaMonthlyRow[];
+  count: number;
+  source: { name: string; dataset: string };
+}
+
+export async function getAreaMonthly(areaName: string): Promise<AreaMonthlyResponse> {
+  const res = await fetch(
+    `${API_BASE}/api/v1/areas/${encodeURIComponent(areaName)}/monthly`,
+    { cache: "no-store" }
+  );
+  if (!res.ok) {
+    throw new Error(`API error: ${res.status}`);
+  }
+  return res.json();
+}

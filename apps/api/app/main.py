@@ -222,3 +222,13 @@ def reality_check(
         }
 
     return response
+
+# Register routers
+from .routes_market import router as market_router  # noqa: E402
+app.include_router(market_router)
+
+from .routes_compare import router as compare_router  # noqa: E402
+app.include_router(compare_router)
+
+from .routes_area_monthly import router as area_monthly_router  # noqa: E402
+app.include_router(area_monthly_router)

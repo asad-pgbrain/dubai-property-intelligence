@@ -3,7 +3,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import { getAreaDetail } from "@/lib/api";
+import MonthlyChart from "@/components/MonthlyChart";
+import { getAreaDetail, getAreaMonthly } from "@/lib/api";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -33,10 +34,18 @@ export default async function AreaDetailPage({ params }: PageProps) {
   const displayName = slug.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
   let detail;
+  let monthly: { month: string; transaction_count: number; volume_aed: number; median_price_aed: number }[] = [];
   try {
     detail = await getAreaDetail(areaName);
   } catch {
     notFound();
+  }
+
+  try {
+    const m = await getAreaMonthly(areaName);
+    monthly = m.data;
+  } catch {
+    monthly = [];
   }
 
   const primary = detail.data.find((d) => d.property_type === "Unit") || detail.data[0];
@@ -119,6 +128,25 @@ export default async function AreaDetailPage({ params }: PageProps) {
             <div className="mt-6 pt-6 border-t border-zinc-100 text-xs text-zinc-500">
               <strong>Period:</strong> {primary.first_transaction} to {primary.last_transaction} · <strong>Source:</strong> {detail.source.name} - {detail.source.dataset}
             </div>
+          </div>
+        )}
+
+        {monthly.length > 1 && (
+          <div className="bg-white rounded-2xl p-6 md:p-8 border border-zinc-200 mb-8">
+            <div className="flex items-baseline justify-between mb-6">
+              <div>
+                <h2 className="text-lg font-semibold text-zinc-900">
+                  Monthly Sales Activity
+                </h2>
+                <p className="text-xs text-zinc-500 mt-1">
+                  Transaction count (bars) and total volume in AED millions (line)
+                </p>
+              </div>
+              <span className="text-xs text-zinc-500">
+                {monthly.length} months
+              </span>
+            </div>
+            <MonthlyChart data={monthly} />
           </div>
         )}
 
