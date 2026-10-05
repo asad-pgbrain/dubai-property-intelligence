@@ -2,6 +2,10 @@
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
 
+// ============================================================
+// Reality Check
+// ============================================================
+
 export interface RealityCheckInput {
   area: string;
   property_type?: string;
@@ -50,7 +54,70 @@ export async function realityCheck(
   if (input.size_sqm) params.append("size_sqm", String(input.size_sqm));
   if (input.asking_price) params.append("asking_price", String(input.asking_price));
 
-  const res = await fetch(`${API_BASE}/api/v1/reality-check?${params.toString()}`);
+  const res = await fetch(`${API_BASE}/api/v1/reality-check?${params.toString()}`, {
+    cache: "no-store",
+  });
+  if (!res.ok) {
+    throw new Error(`API error: ${res.status}`);
+  }
+  return res.json();
+}
+
+// ============================================================
+// Areas
+// ============================================================
+
+export interface AreaSummary {
+  area_name: string;
+  total_transactions: number;
+  median_price_aed: number | null;
+  median_aed_sqft: number | null;
+  last_transaction: string | null;
+}
+
+export interface AreasListResponse {
+  data: AreaSummary[];
+  count: number;
+  source: {
+    name: string;
+    dataset: string;
+  };
+}
+
+export async function listAreas(limit = 100): Promise<AreasListResponse> {
+  const res = await fetch(`${API_BASE}/api/v1/areas?limit=${limit}`, {
+    cache: "no-store",
+  });
+  if (!res.ok) {
+    throw new Error(`API error: ${res.status}`);
+  }
+  return res.json();
+}
+
+export interface AreaDetailRow {
+  area_name: string;
+  property_type: string;
+  transaction_count: number;
+  median_price_aed: number | null;
+  median_aed_sqft: number | null;
+  p25_price_aed: number | null;
+  p75_price_aed: number | null;
+  data_coverage: string;
+  first_transaction: string | null;
+  last_transaction: string | null;
+}
+
+export interface AreaDetailResponse {
+  area: string;
+  data: AreaDetailRow[];
+  source: { name: string; dataset: string };
+}
+
+export async function getAreaDetail(areaName: string): Promise<AreaDetailResponse> {
+  const res = await fetch(
+    `${API_BASE}/api/v1/areas/${encodeURIComponent(areaName)}`,
+    { cache: "no-store" }
+  );
   if (!res.ok) {
     throw new Error(`API error: ${res.status}`);
   }

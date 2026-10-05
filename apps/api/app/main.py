@@ -1,6 +1,5 @@
 """
-Dubai Property Intelligence — API
-
+Dubai Property Intelligence - API
 Main FastAPI application.
 """
 import os
@@ -24,14 +23,12 @@ engine = create_engine(DATABASE_URL, pool_pre_ping=True)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup
-    print("🚀 API starting...")
+    print("API starting...")
     with engine.connect() as conn:
         conn.execute(text("SELECT 1"))
-    print("✅ Database connection OK")
+    print("Database connection OK")
     yield
-    # Shutdown
-    print("👋 API shutting down")
+    print("API shutting down")
 
 
 app = FastAPI(
@@ -41,19 +38,19 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# CORS — allow frontend later
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # Next.js dev
+    allow_origins=[
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://172.31.249.248:3000",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 
-# ============================================================
-# Health Check
-# ============================================================
 @app.get("/api/v1/health")
 def health():
     try:
@@ -64,16 +61,8 @@ def health():
         raise HTTPException(status_code=503, detail=f"Database error: {e}")
 
 
-# ============================================================
-# Market Summary (all areas)
-# ============================================================
 @app.get("/api/v1/market/summary")
-def market_summary(
-    limit: int = Query(20, ge=1, le=100),
-):
-    """
-    Top areas by transaction count with median price and coverage.
-    """
+def market_summary(limit: int = Query(20, ge=1, le=100)):
     sql = text("""
         SELECT
             area_name,
@@ -91,25 +80,50 @@ def market_summary(
     """)
     with engine.connect() as conn:
         rows = conn.execute(sql, {"limit": limit}).mappings().all()
-
     return {
         "data": [dict(r) for r in rows],
         "count": len(rows),
-        "source": {
-            "name": "Dubai Land Department",
-            "dataset": "Transactions",
-        },
+        "source": {"name": "Dubai Land Department", "dataset": "Transactions"},
     }
 
 
-# ============================================================
-# Area Detail
-# ============================================================
+@app.get("/api/v1/areas")
+def list_areas(
+    limit: int = Query(100, ge=1, le=500),
+    min_transactions: int = Query(10, ge=1),
+):
+    sql = text("""
+        SELECT
+            area_name,
+            SUM(transaction_count)::int AS total_transactions,
+            ROUND(
+                PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY median_price)::numeric
+            )::bigint AS median_price_aed,
+            ROUND(
+                PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY median_price_sqft)::numeric
+            )::bigint AS median_aed_sqft,
+            MAX(last_transaction) AS last_transaction
+        FROM analytics.area_market_summary
+        WHERE property_type = 'Unit'
+        GROUP BY area_name
+        HAVING SUM(transaction_count) >= :min_transactions
+        ORDER BY total_transactions DESC
+        LIMIT :limit
+    """)
+    with engine.connect() as conn:
+        rows = conn.execute(sql, {
+            "limit": limit,
+            "min_transactions": min_transactions,
+        }).mappings().all()
+    return {
+        "data": [dict(r) for r in rows],
+        "count": len(rows),
+        "source": {"name": "Dubai Land Department", "dataset": "Transactions"},
+    }
+
+
 @app.get("/api/v1/areas/{area_name}")
 def area_detail(area_name: str):
-    """
-    Get market summary for a specific area (all property types).
-    """
     sql = text("""
         SELECT
             area_name,
@@ -123,42 +137,28 @@ def area_detail(area_name: str):
             first_transaction,
             last_transaction
         FROM analytics.area_market_summary
-        WHERE area_name = UPPER(:area_name)
+        WHERE UPPER(TRIM(area_name)) = UPPER(TRIM(:area_name))
         ORDER BY transaction_count DESC
     """)
     with engine.connect() as conn:
         rows = conn.execute(sql, {"area_name": area_name}).mappings().all()
-
     if not rows:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Area not found: {area_name}",
-        )
-
+        raise HTTPException(status_code=404, detail=f"Area not found: {area_name}")
     return {
         "area": area_name,
         "data": [dict(r) for r in rows],
-        "source": {
-            "name": "Dubai Land Department",
-            "dataset": "Transactions",
-        },
+        "source": {"name": "Dubai Land Department", "dataset": "Transactions"},
     }
 
 
-# ============================================================
-# Reality Check (flagship feature)
-# ============================================================
 @app.get("/api/v1/reality-check")
 def reality_check(
     area: str = Query(..., description="Area name, e.g., DUBAI MARINA"),
-    property_type: Optional[str] = Query(None, description="Unit, Building, Land"),
-    rooms: Optional[str] = Query(None, description="Studio, 1 B/R, etc."),
-    size_sqm: Optional[float] = Query(None, description="Property size in sqm"),
-    asking_price: Optional[float] = Query(None, description="Asking price in AED"),
+    property_type: Optional[str] = Query(None),
+    rooms: Optional[str] = Query(None),
+    size_sqm: Optional[float] = Query(None),
+    asking_price: Optional[float] = Query(None),
 ):
-    """
-    Property Reality Check — compare an asking price against market data.
-    """
     sql = text("""
         SELECT
             tier,
@@ -189,13 +189,7 @@ def reality_check(
     result = dict(result)
     tier = result["tier"]
 
-    # Coverage label based on tier
-    coverage_map = {
-        1: "High",
-        2: "Medium",
-        3: "Medium",
-        4: "Limited",
-    }
+    coverage_map = {1: "High", 2: "Medium", 3: "Medium", 4: "Limited"}
     coverage = coverage_map.get(tier, "Limited")
 
     response = {
@@ -212,15 +206,11 @@ def reality_check(
             1: "Exact match: same area, type, rooms, and similar size",
             2: "Same area, type, and rooms (any size)",
             3: "Same area and property type",
-            4: "Area-wide fallback — limited comparability",
+            4: "Area-wide fallback - limited comparability",
         }.get(tier, "Unknown"),
-        "source": {
-            "name": "Dubai Land Department",
-            "dataset": "Transactions",
-        },
+        "source": {"name": "Dubai Land Department", "dataset": "Transactions"},
     }
 
-    # If asking price provided, add comparison
     if asking_price and result["median_price_aed"]:
         median = float(result["median_price_aed"])
         diff_pct = ((asking_price - median) / median) * 100
