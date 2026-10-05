@@ -123,3 +123,47 @@ export async function getAreaDetail(areaName: string): Promise<AreaDetailRespons
   }
   return res.json();
 }
+
+// ============================================================
+// Market Overview
+// ============================================================
+
+export interface MarketStats {
+  total_transactions: number;
+  total_volume_aed: number;
+  median_price_aed: number;
+  first_date: string;
+  last_date: string;
+  areas_count: number;
+}
+
+export interface MarketAreaRow {
+  area_name: string;
+  transaction_count: number;
+  median_price_aed: number;
+  volume_aed: number;
+}
+
+export interface MarketTrendRow {
+  month: string;
+  transaction_count: number;
+  volume_aed: number;
+  median_price_aed: number;
+}
+
+export interface MarketOverviewResponse {
+  stats: MarketStats;
+  top_areas: MarketAreaRow[];
+  monthly_trend: MarketTrendRow[];
+  source: { name: string; dataset: string };
+}
+
+export async function getMarketOverview(): Promise<MarketOverviewResponse> {
+  const res = await fetch(`${API_BASE}/api/v1/market/overview`, {
+    cache: "no-store",
+  });
+  if (!res.ok) {
+    throw new Error(`API error: ${res.status}`);
+  }
+  return res.json();
+}
