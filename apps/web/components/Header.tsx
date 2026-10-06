@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useState } from "react";
 
 const NAV_ITEMS = [
   { href: "/market", label: "Market" },
@@ -12,19 +13,24 @@ const NAV_ITEMS = [
 
 export default function Header() {
   const pathname = usePathname();
+  const [menuOpen, setMenuOpen] = useState(false);
 
   return (
-    <header className="border-b border-zinc-200 bg-white sticky top-0 z-10">
-      <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+    <header className="border-b border-zinc-200 bg-white sticky top-0 z-30">
+      <div className="max-w-7xl mx-auto px-4 md:px-6 py-3 md:py-4 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2.5">
           <div className="w-9 h-9 bg-blue-600 rounded-lg flex items-center justify-center">
             <span className="text-white font-bold text-xs tracking-tight">DPI</span>
           </div>
-          <span className="font-semibold text-zinc-900 text-sm">
+          <span className="font-semibold text-zinc-900 text-sm hidden sm:inline">
             Dubai Property Intelligence
+          </span>
+          <span className="font-semibold text-zinc-900 text-sm sm:hidden">
+            DPI
           </span>
         </Link>
 
+        {/* Desktop nav */}
         <nav className="hidden md:flex items-center gap-8 text-sm text-zinc-600">
           {NAV_ITEMS.map((item) => {
             const active =
@@ -46,14 +52,50 @@ export default function Header() {
           })}
         </nav>
 
-        {/* Mobile menu — simple text link to home */}
-        <Link
-          href="/"
-          className="md:hidden text-sm text-zinc-600 hover:text-zinc-900"
+        {/* Mobile menu button */}
+        <button
+          onClick={() => setMenuOpen(!menuOpen)}
+          className="md:hidden p-2 -mr-2 text-zinc-700 hover:text-zinc-900"
+          aria-label="Toggle menu"
         >
-          Home
-        </Link>
+          {menuOpen ? (
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          ) : (
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          )}
+        </button>
       </div>
+
+      {/* Mobile dropdown menu */}
+      {menuOpen && (
+        <div className="md:hidden border-t border-zinc-200 bg-white">
+          <nav className="flex flex-col py-2">
+            {NAV_ITEMS.map((item) => {
+              const active =
+                pathname === item.href ||
+                (item.href !== "/" && pathname.startsWith(item.href));
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setMenuOpen(false)}
+                  className={`px-4 py-3 text-sm ${
+                    active
+                      ? "text-zinc-900 font-medium bg-zinc-50"
+                      : "text-zinc-600 hover:bg-zinc-50"
+                  }`}
+                >
+                  {item.label}
+                </Link>
+              );
+            })}
+          </nav>
+        </div>
+      )}
     </header>
   );
 }
