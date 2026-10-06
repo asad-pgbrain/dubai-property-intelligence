@@ -54,8 +54,9 @@ export default async function AreaDetailPage({ params }: PageProps) {
     <div className="min-h-screen bg-zinc-50">
       <Header />
 
-      <main className="max-w-7xl mx-auto px-6 py-12">
-        <nav className="text-sm text-zinc-500 mb-6">
+      <main className="max-w-7xl mx-auto px-4 md:px-6 py-6 md:py-12">
+        {/* Breadcrumb */}
+        <nav className="text-xs md:text-sm text-zinc-500 mb-5 md:mb-6 overflow-x-auto whitespace-nowrap">
           <Link href="/" className="hover:text-zinc-900">Home</Link>
           <span className="mx-2">/</span>
           <Link href="/areas" className="hover:text-zinc-900">Areas</Link>
@@ -63,22 +64,24 @@ export default async function AreaDetailPage({ params }: PageProps) {
           <span className="text-zinc-900">{displayName}</span>
         </nav>
 
-        <div className="mb-10">
-          <h1 className="text-3xl md:text-4xl font-bold text-zinc-900 mb-3 tracking-tight">
+        <div className="mb-6 md:mb-10">
+          <h1 className="text-2xl md:text-4xl font-bold text-zinc-900 mb-2 md:mb-3 tracking-tight">
             {displayName} Property Prices
           </h1>
-          <p className="text-zinc-600 max-w-3xl">
+          <p className="text-sm md:text-base text-zinc-600 max-w-3xl">
             Registered transaction data for {displayName} from the Dubai Land Department.
-            Median prices, AED/sqft, and comparable market activity.
           </p>
         </div>
 
+        {/* Market Summary */}
         {primary && (
-          <div className="bg-white rounded-2xl shadow-sm border border-zinc-200 p-8 mb-8">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-lg font-semibold text-zinc-900">Market Summary</h2>
+          <div className="bg-white rounded-xl md:rounded-2xl shadow-sm border border-zinc-200 p-4 md:p-8 mb-6 md:mb-8">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4 md:mb-6">
+              <h2 className="text-base md:text-lg font-semibold text-zinc-900">
+                Market Summary
+              </h2>
               <span
-                className={`text-xs font-semibold px-3 py-1 rounded-full ${
+                className={`text-xs font-semibold px-2.5 py-1 rounded-full self-start ${
                   primary.data_coverage === "High"
                     ? "bg-green-100 text-green-800"
                     : primary.data_coverage === "Medium"
@@ -90,59 +93,60 @@ export default async function AreaDetailPage({ params }: PageProps) {
               </span>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
               <div>
-                <div className="text-xs text-zinc-500 uppercase tracking-wide mb-2">
+                <div className="text-[10px] md:text-xs text-zinc-500 uppercase tracking-wide mb-1 md:mb-2">
                   Median Price
                 </div>
-                <div className="text-2xl font-bold text-zinc-900">
+                <div className="text-base md:text-2xl font-bold text-zinc-900 break-words">
                   AED {formatAED(primary.median_price_aed)}
                 </div>
               </div>
               <div>
-                <div className="text-xs text-zinc-500 uppercase tracking-wide mb-2">
+                <div className="text-[10px] md:text-xs text-zinc-500 uppercase tracking-wide mb-1 md:mb-2">
                   AED / sqft
                 </div>
-                <div className="text-2xl font-bold text-zinc-900">
+                <div className="text-base md:text-2xl font-bold text-zinc-900">
                   {formatAED(primary.median_aed_sqft)}
                 </div>
               </div>
               <div>
-                <div className="text-xs text-zinc-500 uppercase tracking-wide mb-2">
+                <div className="text-[10px] md:text-xs text-zinc-500 uppercase tracking-wide mb-1 md:mb-2">
                   Transactions
                 </div>
-                <div className="text-2xl font-bold text-zinc-900">
+                <div className="text-base md:text-2xl font-bold text-zinc-900">
                   {primary.transaction_count.toLocaleString()}
                 </div>
               </div>
               <div>
-                <div className="text-xs text-zinc-500 uppercase tracking-wide mb-2">
+                <div className="text-[10px] md:text-xs text-zinc-500 uppercase tracking-wide mb-1 md:mb-2">
                   25th - 75th
                 </div>
-                <div className="text-sm font-semibold text-zinc-700">
-                  AED {formatAED(primary.p25_price_aed)} - {formatAED(primary.p75_price_aed)}
+                <div className="text-xs md:text-sm font-semibold text-zinc-700">
+                  {formatAED(primary.p25_price_aed)} - {formatAED(primary.p75_price_aed)}
                 </div>
               </div>
             </div>
 
-            <div className="mt-6 pt-6 border-t border-zinc-100 text-xs text-zinc-500">
-              <strong>Period:</strong> {primary.first_transaction} to {primary.last_transaction} · <strong>Source:</strong> {detail.source.name} - {detail.source.dataset}
+            <div className="mt-4 md:mt-6 pt-4 md:pt-6 border-t border-zinc-100 text-[11px] md:text-xs text-zinc-500">
+              <strong>Period:</strong> {primary.first_transaction} to {primary.last_transaction} · <strong>Source:</strong> {detail.source.name}
             </div>
           </div>
         )}
 
+        {/* Monthly Chart */}
         {monthly.length > 1 && (
-          <div className="bg-white rounded-2xl p-6 md:p-8 border border-zinc-200 mb-8">
-            <div className="flex items-baseline justify-between mb-6">
+          <div className="bg-white rounded-xl md:rounded-2xl p-4 md:p-8 border border-zinc-200 mb-6 md:mb-8">
+            <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-2 mb-4 md:mb-6">
               <div>
-                <h2 className="text-lg font-semibold text-zinc-900">
+                <h2 className="text-base md:text-lg font-semibold text-zinc-900">
                   Monthly Sales Activity
                 </h2>
-                <p className="text-xs text-zinc-500 mt-1">
+                <p className="text-[11px] md:text-xs text-zinc-500 mt-1">
                   Transaction count (bars) and total volume in AED millions (line)
                 </p>
               </div>
-              <span className="text-xs text-zinc-500">
+              <span className="text-[10px] md:text-xs text-zinc-500">
                 {monthly.length} months
               </span>
             </div>
@@ -150,11 +154,60 @@ export default async function AreaDetailPage({ params }: PageProps) {
           </div>
         )}
 
-        <div className="bg-white rounded-2xl shadow-sm border border-zinc-200 overflow-hidden mb-8">
-          <div className="px-6 py-4 border-b border-zinc-100">
-            <h2 className="text-lg font-semibold text-zinc-900">All Property Types</h2>
+        {/* Property Types — Mobile cards + Desktop table */}
+        <div className="bg-white rounded-xl md:rounded-2xl shadow-sm border border-zinc-200 overflow-hidden mb-6 md:mb-8">
+          <div className="px-4 md:px-6 py-4 border-b border-zinc-100">
+            <h2 className="text-base md:text-lg font-semibold text-zinc-900">
+              All Property Types
+            </h2>
           </div>
-          <div className="overflow-x-auto">
+
+          {/* Mobile cards */}
+          <div className="md:hidden divide-y divide-zinc-100">
+            {detail.data.map((row) => (
+              <div key={row.property_type} className="p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="font-semibold text-zinc-900 text-sm">
+                    {row.property_type}
+                  </span>
+                  <span
+                    className={`text-[10px] px-2 py-0.5 rounded-full ${
+                      row.data_coverage === "High"
+                        ? "bg-green-100 text-green-800"
+                        : row.data_coverage === "Medium"
+                        ? "bg-yellow-100 text-yellow-800"
+                        : "bg-zinc-100 text-zinc-600"
+                    }`}
+                  >
+                    {row.data_coverage}
+                  </span>
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  <div>
+                    <div className="text-[10px] uppercase text-zinc-400">Sales</div>
+                    <div className="text-xs font-medium text-zinc-700">
+                      {row.transaction_count.toLocaleString()}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-[10px] uppercase text-zinc-400">Median</div>
+                    <div className="text-xs font-semibold text-zinc-900">
+                      {formatAED(row.median_price_aed)}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-[10px] uppercase text-zinc-400">AED/sqft</div>
+                    <div className="text-xs font-medium text-zinc-700">
+                      {formatAED(row.median_aed_sqft)}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop table */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full">
               <thead className="bg-zinc-50 border-b border-zinc-200">
                 <tr>
@@ -198,22 +251,23 @@ export default async function AreaDetailPage({ params }: PageProps) {
           </div>
         </div>
 
-        <div className="bg-blue-50 border border-blue-200 rounded-2xl p-8 text-center">
-          <h3 className="text-lg font-semibold text-zinc-900 mb-2">
+        {/* CTA */}
+        <div className="bg-blue-50 border border-blue-200 rounded-xl md:rounded-2xl p-6 md:p-8 text-center">
+          <h3 className="text-base md:text-lg font-semibold text-zinc-900 mb-2">
             Got a specific property in {displayName}?
           </h3>
-          <p className="text-zinc-600 mb-5 text-sm">
+          <p className="text-zinc-600 mb-5 text-xs md:text-sm">
             Enter the asking price and compare it against {primary ? primary.transaction_count.toLocaleString() : "our"} comparable transactions.
           </p>
           <Link
             href="/"
-            className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-lg transition"
+            className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-5 md:px-6 py-2.5 md:py-3 rounded-lg transition text-sm"
           >
             Run a Reality Check
           </Link>
         </div>
 
-        <div className="mt-8 text-xs text-zinc-500 text-center">
+        <div className="mt-6 md:mt-8 text-[11px] md:text-xs text-zinc-500 text-center">
           Source: {detail.source.name} - {detail.source.dataset} dataset. Sales only. Not investment advice.
         </div>
       </main>
