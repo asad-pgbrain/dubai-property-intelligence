@@ -43,14 +43,8 @@ export default function RealityCheckForm() {
     return new Intl.NumberFormat("en-US").format(Math.round(value));
   }
 
-  function getVerdict(diffPct: number): {
-    label: string;
-    subtext: string;
-    color: string;
-    bg: string;
-    border: string;
-  } {
-    if (diffPct > 15) {
+  function getVerdict(diffPct: number) {
+    if (diffPct > 15)
       return {
         label: "Above Market",
         subtext: `${diffPct.toFixed(1)}% higher than market median`,
@@ -58,8 +52,7 @@ export default function RealityCheckForm() {
         bg: "bg-red-50",
         border: "border-red-200",
       };
-    }
-    if (diffPct > 5) {
+    if (diffPct > 5)
       return {
         label: "Slightly Above Market",
         subtext: `${diffPct.toFixed(1)}% higher than market median`,
@@ -67,8 +60,7 @@ export default function RealityCheckForm() {
         bg: "bg-orange-50",
         border: "border-orange-200",
       };
-    }
-    if (diffPct > -5) {
+    if (diffPct > -5)
       return {
         label: "In Line With Market",
         subtext: `Within ${Math.abs(diffPct).toFixed(1)}% of market median`,
@@ -76,8 +68,7 @@ export default function RealityCheckForm() {
         bg: "bg-blue-50",
         border: "border-blue-200",
       };
-    }
-    if (diffPct > -15) {
+    if (diffPct > -15)
       return {
         label: "Below Market",
         subtext: `${Math.abs(diffPct).toFixed(1)}% lower than market median`,
@@ -85,7 +76,6 @@ export default function RealityCheckForm() {
         bg: "bg-green-50",
         border: "border-green-200",
       };
-    }
     return {
       label: "Significantly Below Market",
       subtext: `${Math.abs(diffPct).toFixed(1)}% lower than market median`,
@@ -100,7 +90,7 @@ export default function RealityCheckForm() {
       {/* LEFT: Form */}
       <form
         onSubmit={handleSubmit}
-        className="lg:col-span-2 bg-white rounded-2xl shadow-lg p-6 border border-zinc-200"
+        className="lg:col-span-2 bg-white rounded-2xl shadow-lg p-5 md:p-6 border border-zinc-200"
       >
         <h3 className="text-base font-semibold text-zinc-900 mb-5">
           Enter property details
@@ -170,7 +160,7 @@ export default function RealityCheckForm() {
             </div>
             <div>
               <label className="block text-xs font-medium text-zinc-600 mb-1.5 uppercase tracking-wide">
-                Asking Price (AED)
+                Price (AED)
               </label>
               <input
                 type="number"
@@ -199,12 +189,11 @@ export default function RealityCheckForm() {
       </form>
 
       {/* RIGHT: Result */}
-      <div className="lg:col-span-3">
-        {/* Empty state */}
+      <div className="lg:col-span-3 w-full">
         {!result && !loading && (
-          <div className="bg-white rounded-2xl shadow-lg p-12 border border-dashed border-zinc-300 text-center">
-            <div className="w-16 h-16 bg-zinc-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="bg-white rounded-2xl shadow-lg p-8 md:p-12 border border-dashed border-zinc-300 text-center">
+            <div className="w-14 h-14 md:w-16 md:h-16 bg-zinc-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-7 h-7 md:w-8 md:h-8 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
               </svg>
             </div>
@@ -214,25 +203,23 @@ export default function RealityCheckForm() {
           </div>
         )}
 
-        {/* Loading state */}
         {loading && (
-          <div className="bg-white rounded-2xl shadow-lg p-12 border border-zinc-200 text-center">
-            <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <div className="bg-white rounded-2xl shadow-lg p-8 md:p-12 border border-zinc-200 text-center">
+            <div className="w-14 h-14 md:w-16 md:h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
             <p className="text-zinc-600 text-sm">Analyzing 161,000+ transactions...</p>
           </div>
         )}
 
-        {/* Result */}
         {result && (
           <div className="space-y-4">
             {/* Verdict Banner */}
             {result.comparison && (() => {
               const v = getVerdict(result.comparison.diff_pct);
               return (
-                <div className={`${v.bg} ${v.border} border rounded-2xl p-6`}>
-                  <div className="flex items-start justify-between mb-4">
+                <div className={`${v.bg} ${v.border} border rounded-2xl p-5 md:p-6`}>
+                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4">
                     <div>
-                      <div className={`text-2xl font-bold ${v.color} mb-1`}>
+                      <div className={`text-xl md:text-2xl font-bold ${v.color} mb-1`}>
                         {v.label}
                       </div>
                       <div className={`text-sm ${v.color} opacity-80`}>
@@ -240,7 +227,7 @@ export default function RealityCheckForm() {
                       </div>
                     </div>
                     <span
-                      className={`text-xs font-semibold px-2.5 py-1 rounded-full bg-white ${
+                      className={`text-xs font-semibold px-2.5 py-1 rounded-full bg-white self-start ${
                         result.coverage === "High"
                           ? "text-green-700"
                           : result.coverage === "Medium"
@@ -252,36 +239,35 @@ export default function RealityCheckForm() {
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-3 gap-4 pt-4 border-t border-black/5">
+                  <div className="grid grid-cols-3 gap-3 md:gap-4 pt-4 border-t border-black/5">
                     <div>
-                      <div className="text-xs text-zinc-500 mb-1 uppercase tracking-wide">
+                      <div className="text-[10px] md:text-xs text-zinc-500 mb-1 uppercase tracking-wide">
                         Your price
                       </div>
-                      <div className="text-base font-bold text-zinc-900">
+                      <div className="text-sm md:text-base font-bold text-zinc-900">
                         {formatAED(result.comparison.asking_price)}
                       </div>
-                      <div className="text-xs text-zinc-400">AED</div>
+                      <div className="text-[10px] text-zinc-400">AED</div>
                     </div>
                     <div>
-                      <div className="text-xs text-zinc-500 mb-1 uppercase tracking-wide">
-                        Market median
+                      <div className="text-[10px] md:text-xs text-zinc-500 mb-1 uppercase tracking-wide">
+                        Market
                       </div>
-                      <div className="text-base font-bold text-zinc-900">
+                      <div className="text-sm md:text-base font-bold text-zinc-900">
                         {formatAED(result.comparison.market_median)}
                       </div>
-                      <div className="text-xs text-zinc-400">AED</div>
+                      <div className="text-[10px] text-zinc-400">AED</div>
                     </div>
                     <div>
-                      <div className="text-xs text-zinc-500 mb-1 uppercase tracking-wide">
-                        Difference
+                      <div className="text-[10px] md:text-xs text-zinc-500 mb-1 uppercase tracking-wide">
+                        Diff
                       </div>
-                      <div className={`text-base font-bold ${v.color}`}>
-                        {result.comparison.diff_pct > 0 ? "+" : ""}
-                        {formatAED(result.comparison.diff_aed)}
-                      </div>
-                      <div className="text-xs text-zinc-400">
+                      <div className={`text-sm md:text-base font-bold ${v.color}`}>
                         {result.comparison.diff_pct > 0 ? "+" : ""}
                         {result.comparison.diff_pct.toFixed(1)}%
+                      </div>
+                      <div className="text-[10px] text-zinc-400">
+                        {formatAED(result.comparison.diff_aed)}
                       </div>
                     </div>
                   </div>
@@ -291,67 +277,65 @@ export default function RealityCheckForm() {
 
             {/* Market stats grid */}
             <div className="bg-white rounded-2xl shadow-lg border border-zinc-200 overflow-hidden">
-              <div className="px-6 py-4 border-b border-zinc-100">
-                <h4 className="text-sm font-semibold text-zinc-900">
-                  Market Data
-                </h4>
+              <div className="px-5 md:px-6 py-4 border-b border-zinc-100">
+                <h4 className="text-sm font-semibold text-zinc-900">Market Data</h4>
               </div>
-              <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-zinc-100">
-                <div className="p-5">
-                  <div className="text-xs text-zinc-500 mb-2 uppercase tracking-wide">
+              <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-y md:divide-y-0 divide-zinc-100">
+                <div className="p-4 md:p-5">
+                  <div className="text-[10px] md:text-xs text-zinc-500 mb-2 uppercase tracking-wide">
                     Comparables
                   </div>
-                  <div className="text-xl font-bold text-zinc-900">
+                  <div className="text-lg md:text-xl font-bold text-zinc-900">
                     {result.market.comp_count}
                   </div>
-                  <div className="text-xs text-zinc-400 mt-1">similar sales</div>
+                  <div className="text-[10px] text-zinc-400 mt-1">similar sales</div>
                 </div>
-                <div className="p-5">
-                  <div className="text-xs text-zinc-500 mb-2 uppercase tracking-wide">
+                <div className="p-4 md:p-5">
+                  <div className="text-[10px] md:text-xs text-zinc-500 mb-2 uppercase tracking-wide">
                     AED / sqft
                   </div>
-                  <div className="text-xl font-bold text-zinc-900">
+                  <div className="text-lg md:text-xl font-bold text-zinc-900">
                     {formatAED(result.market.median_aed_sqft)}
                   </div>
-                  <div className="text-xs text-zinc-400 mt-1">median</div>
+                  <div className="text-[10px] text-zinc-400 mt-1">median</div>
                 </div>
-                <div className="p-5">
-                  <div className="text-xs text-zinc-500 mb-2 uppercase tracking-wide">
-                    25th percentile
+                <div className="p-4 md:p-5">
+                  <div className="text-[10px] md:text-xs text-zinc-500 mb-2 uppercase tracking-wide">
+                    P25
                   </div>
-                  <div className="text-base font-bold text-zinc-700">
+                  <div className="text-sm md:text-base font-bold text-zinc-700">
                     {formatAED(result.market.p25_price_aed)}
                   </div>
-                  <div className="text-xs text-zinc-400 mt-1">AED</div>
+                  <div className="text-[10px] text-zinc-400 mt-1">AED</div>
                 </div>
-                <div className="p-5">
-                  <div className="text-xs text-zinc-500 mb-2 uppercase tracking-wide">
-                    75th percentile
+                <div className="p-4 md:p-5">
+                  <div className="text-[10px] md:text-xs text-zinc-500 mb-2 uppercase tracking-wide">
+                    P75
                   </div>
-                  <div className="text-base font-bold text-zinc-700">
+                  <div className="text-sm md:text-base font-bold text-zinc-700">
                     {formatAED(result.market.p75_price_aed)}
                   </div>
-                  <div className="text-xs text-zinc-400 mt-1">AED</div>
+                  <div className="text-[10px] text-zinc-400 mt-1">AED</div>
                 </div>
               </div>
             </div>
 
             {/* Footer / Provenance */}
-            <div className="bg-zinc-50 rounded-2xl p-5 text-xs text-zinc-600 space-y-1.5">
+            <div className="bg-zinc-50 rounded-2xl p-4 md:p-5 text-xs text-zinc-600 space-y-1.5">
               <div className="flex items-start gap-2">
-                <span className="font-semibold text-zinc-700 min-w-[80px]">Match:</span>
+                <span className="font-semibold text-zinc-700 min-w-[60px]">Match:</span>
                 <span>{result.tier_explanation}</span>
               </div>
               <div className="flex items-start gap-2">
-                <span className="font-semibold text-zinc-700 min-w-[80px]">Period:</span>
+                <span className="font-semibold text-zinc-700 min-w-[60px]">Period:</span>
                 <span>
                   {result.market.first_date} to {result.market.last_date}
                 </span>
               </div>
               <div className="flex items-start gap-2">
-                <span className="font-semibold text-zinc-700 min-w-[80px]">Source:</span>
+                <span className="font-semibold text-zinc-700 min-w-[60px]">Source:</span>
                 <span>
-                  {result.source.name} — {result.source.dataset} dataset
+                  {result.source.name} — {result.source.dataset}
                 </span>
               </div>
               <div className="pt-2 border-t border-zinc-200 mt-2 text-zinc-500">

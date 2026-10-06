@@ -247,3 +247,24 @@ export async function getAreaMonthly(areaName: string): Promise<AreaMonthlyRespo
   }
   return res.json();
 }
+
+// ============================================================
+// Compare Monthly
+// ============================================================
+
+export interface CompareMonthlyRow {
+  area_name: string;
+  month: string;
+  transaction_count: number;
+  median_price_aed: number;
+}
+
+export async function compareMonthly(areas: string[]): Promise<{ data: CompareMonthlyRow[] }> {
+  const params = new URLSearchParams();
+  areas.forEach((a) => params.append("areas", a));
+  const res = await fetch(`${API_BASE}/api/v1/compare/monthly?${params.toString()}`, {
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`API error: ${res.status}`);
+  return res.json();
+}

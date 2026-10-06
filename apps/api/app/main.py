@@ -232,3 +232,6 @@ app.include_router(compare_router)
 
 from .routes_area_monthly import router as area_monthly_router  # noqa: E402
 app.include_router(area_monthly_router)
+
+from .routes_compare_monthly import router as compare_monthly_router  # noqa: E402
+app.include_router(compare_monthly_router)
