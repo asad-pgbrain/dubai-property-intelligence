@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 300" width="1400" height="300" fill="none">
+  <!-- Background -->
+  <rect width="1400" height="300" fill="#ffffff"/>
+
+  <!-- ============================================ -->
+  <!-- ICON — Dubai skyline + ascending chart line -->
+  <!-- ============================================ -->
+  <g transform="translate(40, 30)">
+    <!-- Base platform -->
+    <rect x="0" y="220" width="330" height="10" rx="2" fill="#000000"/>
+
+    <!-- Building 1 — short -->
+    <rect x="10" y="170" width="30" height="50" fill="#000000"/>
+    <rect x="17" y="158" width="16" height="12" fill="#000000"/>
+
+    <!-- Building 2 — angled top -->
+    <polygon points="55,220 55,150 70,128 95,150 95,220" fill="#000000"/>
+
+    <!-- Building 3 — Burj Khalifa style -->
+    <rect x="115" y="80" width="42" height="140" fill="#000000"/>
+    <polygon points="115,80 136,18 157,80" fill="#000000"/>
+    <rect x="134" y="6" width="4" height="14" fill="#000000"/>
+
+    <!-- Building 4 — medium tall -->
+    <rect x="170" y="120" width="40" height="100" fill="#000000"/>
+    <rect x="184" y="105" width="12" height="15" fill="#000000"/>
+
+    <!-- Building 5 — short -->
+    <rect x="222" y="160" width="30" height="60" fill="#000000"/>
+    <rect x="228" y="148" width="18" height="12" fill="#000000"/>
+
+    <!-- Building 6 — medium -->
+    <rect x="265" y="140" width="35" height="80" fill="#000000"/>
+
+    <!-- Chart line — UAE green, rising -->
+    <polyline
+      points="15,205 75,175 140,155 205,130 265,100"
+      stroke="#00732F"
+      stroke-width="9"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      fill="none"/>
+
+    <!-- Data points -->
+    <circle cx="15" cy="205" r="7" fill="#00732F"/>
+    <circle cx="75" cy="175" r="7" fill="#00732F"/>
+    <circle cx="140" cy="155" r="7" fill="#00732F"/>
+    <circle cx="205" cy="130" r="7" fill="#00732F"/>
+
+    <!-- Arrow head — UAE dark red -->
+    <polygon points="310,60 277,113 253,87" fill="#C8102E"/>
+  </g>
+
+  <!-- ============================================ -->
+  <!-- TEXT — DPI wordmark, full name, tagline      -->
+  <!-- ============================================ -->
+  <g transform="translate(440, 0)">
+    <!-- DPI — main wordmark -->
+    <text x="0" y="148"
+      font-family="Inter, 'Segoe UI', system-ui, -apple-system, Arial, sans-serif"
+      font-size="140"
+      font-weight="800"
+      fill="#000000"
+      letter-spacing="-3">DPI</text>
+
+    <!-- Full name -->
+    <text x="5" y="212"
+      font-family="Inter, 'Segoe UI', system-ui, -apple-system, Arial, sans-serif"
+      font-size="34"
+      font-weight="700"
+      fill="#404040"
+      letter-spacing="1.5">DUBAI PROPERTY INTELLIGENCE</text>
+
+    <!-- Tagline -->
+    <text x="5" y="252"
+      font-family="Inter, 'Segoe UI', system-ui, -apple-system, Arial, sans-serif"
+      font-size="19"
+      font-weight="500"
+      fill="#71717a"
+      letter-spacing="3.5">PROPERTY DATA WITHOUT GUESSWORK</text>
+  </g>
+</svg>
