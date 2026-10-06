@@ -38,14 +38,6 @@ export const metadata: Metadata = {
     title: "Dubai Property Intelligence — Market Data & Reality Check",
     description:
       "Check any Dubai property against real market data from the Dubai Land Department.",
-    images: [
-      {
-        url: "/opengraph-image",
-        width: 1200,
-        height: 630,
-        alt: "Dubai Property Intelligence",
-      },
-    ],
   },
   twitter: {
     card: "summary_large_image",

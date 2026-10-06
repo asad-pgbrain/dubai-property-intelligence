@@ -28,12 +28,12 @@ interface MonthlyRow {
 }
 
 const COLORS = [
-  "#3b82f6", // blue
-  "#10b981", // green
-  "#f59e0b", // amber
-  "#ef4444", // red
-  "#8b5cf6", // purple
-  "#06b6d4", // cyan
+  "#3b82f6",
+  "#10b981",
+  "#f59e0b",
+  "#ef4444",
+  "#8b5cf6",
+  "#06b6d4",
 ];
 
 function displayName(name: string): string {
@@ -59,9 +59,6 @@ function formatMonth(month: string): string {
   return d.toLocaleDateString("en-US", { month: "short", year: "2-digit" });
 }
 
-// ============================================================
-// Median Price Bar Chart
-// ============================================================
 export function ComparePriceChart({ data }: { data: AreaRow[] }) {
   const chartData = data.map((d) => ({
     area: displayName(d.area_name),
@@ -69,19 +66,19 @@ export function ComparePriceChart({ data }: { data: AreaRow[] }) {
   }));
 
   return (
-    <div className="w-full h-80">
+    <div className="w-full h-64 md:h-80">
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+        <BarChart data={chartData} margin={{ top: 10, right: 5, left: -15, bottom: 0 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
           <XAxis
             dataKey="area"
-            tick={{ fill: "#71717a", fontSize: 11 }}
+            tick={{ fill: "#71717a", fontSize: 10 }}
             axisLine={{ stroke: "#e5e7eb" }}
             tickLine={false}
             interval={0}
           />
           <YAxis
-            tick={{ fill: "#71717a", fontSize: 12 }}
+            tick={{ fill: "#71717a", fontSize: 10 }}
             axisLine={false}
             tickLine={false}
             tickFormatter={formatCompact}
@@ -91,10 +88,10 @@ export function ComparePriceChart({ data }: { data: AreaRow[] }) {
               backgroundColor: "white",
               border: "1px solid #e5e7eb",
               borderRadius: "8px",
-              fontSize: "12px",
+              fontSize: "11px",
               boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
             }}
-            formatter={(value: number) => `AED ${formatAED(value)}`}
+            formatter={(value) => `AED ${formatAED(Number(value))}`}
             labelStyle={{ fontWeight: 600, color: "#18181b" }}
           />
           <Bar dataKey="median_price" fill="#3b82f6" radius={[6, 6, 0, 0]} maxBarSize={80} />
@@ -104,9 +101,6 @@ export function ComparePriceChart({ data }: { data: AreaRow[] }) {
   );
 }
 
-// ============================================================
-// AED/sqft Bar Chart
-// ============================================================
 export function CompareSqftChart({ data }: { data: AreaRow[] }) {
   const chartData = data.map((d) => ({
     area: displayName(d.area_name),
@@ -114,19 +108,19 @@ export function CompareSqftChart({ data }: { data: AreaRow[] }) {
   }));
 
   return (
-    <div className="w-full h-80">
+    <div className="w-full h-64 md:h-80">
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+        <BarChart data={chartData} margin={{ top: 10, right: 5, left: -15, bottom: 0 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
           <XAxis
             dataKey="area"
-            tick={{ fill: "#71717a", fontSize: 11 }}
+            tick={{ fill: "#71717a", fontSize: 10 }}
             axisLine={{ stroke: "#e5e7eb" }}
             tickLine={false}
             interval={0}
           />
           <YAxis
-            tick={{ fill: "#71717a", fontSize: 12 }}
+            tick={{ fill: "#71717a", fontSize: 10 }}
             axisLine={false}
             tickLine={false}
             tickFormatter={formatCompact}
@@ -136,10 +130,10 @@ export function CompareSqftChart({ data }: { data: AreaRow[] }) {
               backgroundColor: "white",
               border: "1px solid #e5e7eb",
               borderRadius: "8px",
-              fontSize: "12px",
+              fontSize: "11px",
               boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
             }}
-            formatter={(value: number) => `${formatAED(value)} AED/sqft`}
+            formatter={(value) => `${formatAED(Number(value))} AED/sqft`}
             labelStyle={{ fontWeight: 600, color: "#18181b" }}
           />
           <Bar dataKey="median_sqft" fill="#10b981" radius={[6, 6, 0, 0]} maxBarSize={80} />
@@ -149,9 +143,6 @@ export function CompareSqftChart({ data }: { data: AreaRow[] }) {
   );
 }
 
-// ============================================================
-// Monthly Trend Overlay Line Chart
-// ============================================================
 export function CompareTrendChart({
   data,
   areas,
@@ -159,11 +150,10 @@ export function CompareTrendChart({
   data: MonthlyRow[];
   areas: string[];
 }) {
-  // Build map of month -> { AREA_NAME_UPPER: count }
   const monthMap = new Map<string, Record<string, number>>();
 
   data.forEach((row) => {
-    const monthKey = row.month.slice(0, 7); // YYYY-MM
+    const monthKey = row.month.slice(0, 7);
     if (!monthMap.has(monthKey)) {
       monthMap.set(monthKey, {});
     }
@@ -178,22 +168,21 @@ export function CompareTrendChart({
       ...values,
     }));
 
-  // Normalize area keys for matching
   const areaKeys = areas.map((a) => normArea(a));
 
   return (
-    <div className="w-full h-80">
+    <div className="w-full h-64 md:h-80">
       <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+        <LineChart data={chartData} margin={{ top: 10, right: 5, left: -15, bottom: 0 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
           <XAxis
             dataKey="month"
-            tick={{ fill: "#71717a", fontSize: 12 }}
+            tick={{ fill: "#71717a", fontSize: 10 }}
             axisLine={{ stroke: "#e5e7eb" }}
             tickLine={false}
           />
           <YAxis
-            tick={{ fill: "#71717a", fontSize: 12 }}
+            tick={{ fill: "#71717a", fontSize: 10 }}
             axisLine={false}
             tickLine={false}
             tickFormatter={formatCompact}
@@ -203,14 +192,14 @@ export function CompareTrendChart({
               backgroundColor: "white",
               border: "1px solid #e5e7eb",
               borderRadius: "8px",
-              fontSize: "12px",
+              fontSize: "11px",
               boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
             }}
-            formatter={(value: number) => `${value} sales`}
+            formatter={(value) => `${value} sales`}
             labelStyle={{ fontWeight: 600, color: "#18181b" }}
           />
           <Legend
-            wrapperStyle={{ fontSize: "12px", paddingTop: "12px" }}
+            wrapperStyle={{ fontSize: "10px", paddingTop: "8px" }}
             iconType="circle"
           />
           {areaKeys.map((areaKey, idx) => (
@@ -220,7 +209,7 @@ export function CompareTrendChart({
               dataKey={areaKey}
               name={displayName(areaKey)}
               stroke={COLORS[idx % COLORS.length]}
-              strokeWidth={2.5}
+              strokeWidth={2}
               dot={{ r: 3 }}
               activeDot={{ r: 5 }}
               connectNulls
