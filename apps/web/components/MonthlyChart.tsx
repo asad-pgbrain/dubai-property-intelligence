@@ -35,10 +35,6 @@ function formatCompact(value: number): string {
   return String(value);
 }
 
-function formatFull(value: number): string {
-  return new Intl.NumberFormat("en-US").format(Math.round(value));
-}
-
 export default function MonthlyChart({ data }: Props) {
   const chartData = data.map((d) => ({
     month: formatMonth(d.month),
@@ -47,11 +43,11 @@ export default function MonthlyChart({ data }: Props) {
   }));
 
   return (
-    <div className="w-full h-80">
+    <div className="w-full h-64 md:h-80">
       <ResponsiveContainer width="100%" height="100%">
         <ComposedChart
           data={chartData}
-          margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+          margin={{ top: 10, right: 5, left: -15, bottom: 0 }}
         >
           <CartesianGrid
             strokeDasharray="3 3"
@@ -60,13 +56,13 @@ export default function MonthlyChart({ data }: Props) {
           />
           <XAxis
             dataKey="month"
-            tick={{ fill: "#71717a", fontSize: 12 }}
+            tick={{ fill: "#71717a", fontSize: 10 }}
             axisLine={{ stroke: "#e5e7eb" }}
             tickLine={false}
           />
           <YAxis
             yAxisId="left"
-            tick={{ fill: "#71717a", fontSize: 12 }}
+            tick={{ fill: "#71717a", fontSize: 10 }}
             axisLine={false}
             tickLine={false}
             tickFormatter={formatCompact}
@@ -74,7 +70,7 @@ export default function MonthlyChart({ data }: Props) {
           <YAxis
             yAxisId="right"
             orientation="right"
-            tick={{ fill: "#71717a", fontSize: 12 }}
+            tick={{ fill: "#71717a", fontSize: 10 }}
             axisLine={false}
             tickLine={false}
             tickFormatter={(v) => `${v}M`}
@@ -84,7 +80,7 @@ export default function MonthlyChart({ data }: Props) {
               backgroundColor: "white",
               border: "1px solid #e5e7eb",
               borderRadius: "8px",
-              fontSize: "12px",
+              fontSize: "11px",
               boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
             }}
             labelStyle={{
@@ -94,7 +90,7 @@ export default function MonthlyChart({ data }: Props) {
             }}
           />
           <Legend
-            wrapperStyle={{ fontSize: "12px", paddingTop: "12px" }}
+            wrapperStyle={{ fontSize: "11px", paddingTop: "8px" }}
             iconType="circle"
           />
           <Bar
@@ -102,8 +98,8 @@ export default function MonthlyChart({ data }: Props) {
             dataKey="transactions"
             name="Transactions"
             fill="#3b82f6"
-            radius={[6, 6, 0, 0]}
-            maxBarSize={60}
+            radius={[4, 4, 0, 0]}
+            maxBarSize={40}
           />
           <Line
             yAxisId="right"
@@ -111,9 +107,9 @@ export default function MonthlyChart({ data }: Props) {
             dataKey="volume"
             name="Volume (AED M)"
             stroke="#10b981"
-            strokeWidth={2.5}
-            dot={{ r: 4, fill: "#10b981" }}
-            activeDot={{ r: 6 }}
+            strokeWidth={2}
+            dot={{ r: 3, fill: "#10b981" }}
+            activeDot={{ r: 5 }}
           />
         </ComposedChart>
       </ResponsiveContainer>

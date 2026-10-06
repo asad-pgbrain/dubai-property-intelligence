@@ -22,6 +22,10 @@ function slugify(name: string): string {
   return name.toLowerCase().trim().replace(/\s+/g, "-");
 }
 
+function displayName(name: string): string {
+  return name.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
 export default async function MarketPage() {
   let data;
   let error: string | null = null;
@@ -36,12 +40,12 @@ export default async function MarketPage() {
     <div className="min-h-screen bg-zinc-50">
       <Header />
 
-      <main className="max-w-7xl mx-auto px-6 py-12">
-        <div className="mb-10">
-          <h1 className="text-3xl md:text-4xl font-bold text-zinc-900 mb-3 tracking-tight">
+      <main className="max-w-7xl mx-auto px-4 md:px-6 py-8 md:py-12">
+        <div className="mb-8 md:mb-10">
+          <h1 className="text-2xl md:text-4xl font-bold text-zinc-900 mb-3 tracking-tight">
             Dubai Property Market Overview
           </h1>
-          <p className="text-zinc-600 max-w-3xl">
+          <p className="text-sm md:text-base text-zinc-600 max-w-3xl">
             {data
               ? `Snapshot of ${data.stats.total_transactions.toLocaleString()} registered sales across ${data.stats.areas_count} Dubai areas, from ${data.stats.first_date} to ${data.stats.last_date}.`
               : "Real market data from the Dubai Land Department."}
@@ -56,52 +60,54 @@ export default async function MarketPage() {
 
         {data && (
           <>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
-              <div className="bg-white rounded-2xl p-6 border border-zinc-200">
-                <div className="text-xs text-zinc-500 uppercase tracking-wide mb-2">
+            {/* KPI Cards */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-8 md:mb-10">
+              <div className="bg-white rounded-xl md:rounded-2xl p-4 md:p-6 border border-zinc-200">
+                <div className="text-[10px] md:text-xs text-zinc-500 uppercase tracking-wide mb-2">
                   Total Sales
                 </div>
-                <div className="text-2xl font-bold text-zinc-900">
+                <div className="text-lg md:text-2xl font-bold text-zinc-900">
                   {data.stats.total_transactions.toLocaleString()}
                 </div>
               </div>
-              <div className="bg-white rounded-2xl p-6 border border-zinc-200">
-                <div className="text-xs text-zinc-500 uppercase tracking-wide mb-2">
+              <div className="bg-white rounded-xl md:rounded-2xl p-4 md:p-6 border border-zinc-200">
+                <div className="text-[10px] md:text-xs text-zinc-500 uppercase tracking-wide mb-2">
                   Total Volume
                 </div>
-                <div className="text-2xl font-bold text-zinc-900">
+                <div className="text-lg md:text-2xl font-bold text-zinc-900">
                   AED {formatCompact(data.stats.total_volume_aed)}
                 </div>
               </div>
-              <div className="bg-white rounded-2xl p-6 border border-zinc-200">
-                <div className="text-xs text-zinc-500 uppercase tracking-wide mb-2">
+              <div className="bg-white rounded-xl md:rounded-2xl p-4 md:p-6 border border-zinc-200">
+                <div className="text-[10px] md:text-xs text-zinc-500 uppercase tracking-wide mb-2">
                   Median Price
                 </div>
-                <div className="text-2xl font-bold text-zinc-900">
+                <div className="text-lg md:text-2xl font-bold text-zinc-900">
                   AED {formatCompact(data.stats.median_price_aed)}
                 </div>
               </div>
-              <div className="bg-white rounded-2xl p-6 border border-zinc-200">
-                <div className="text-xs text-zinc-500 uppercase tracking-wide mb-2">
-                  Areas Covered
+              <div className="bg-white rounded-xl md:rounded-2xl p-4 md:p-6 border border-zinc-200">
+                <div className="text-[10px] md:text-xs text-zinc-500 uppercase tracking-wide mb-2">
+                  Areas
                 </div>
-                <div className="text-2xl font-bold text-zinc-900">
+                <div className="text-lg md:text-2xl font-bold text-zinc-900">
                   {data.stats.areas_count}
                 </div>
               </div>
             </div>
 
-            <div className="bg-white rounded-2xl p-6 md:p-8 border border-zinc-200 mb-10">
-              <div className="flex items-baseline justify-between mb-6">
+            {/* Monthly Chart */}
+            <div className="bg-white rounded-xl md:rounded-2xl p-4 md:p-8 border border-zinc-200 mb-8 md:mb-10">
+              <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-2 mb-4 md:mb-6">
                 <div>
-                  <h2 className="text-lg font-semibold text-zinc-900">
+                  <h2 className="text-base md:text-lg font-semibold text-zinc-900">
                     Monthly Sales Activity
                   </h2>
-                  <p className="text-xs text-zinc-500 mt-1">
+                  <p className="text-[11px] md:text-xs text-zinc-500 mt-1">
                     Transaction count (bars) and total volume in AED millions (line)
                   </p>
                 </div>
-                <span className="text-xs text-zinc-500">
+                <span className="text-[10px] md:text-xs text-zinc-500">
                   {data.monthly_trend.length} months
                 </span>
               </div>
@@ -109,19 +115,71 @@ export default async function MarketPage() {
               <MonthlyChart data={data.monthly_trend} />
             </div>
 
-            <div className="bg-white rounded-2xl border border-zinc-200 overflow-hidden">
-              <div className="px-6 py-4 border-b border-zinc-100 flex items-baseline justify-between">
-                <h2 className="text-lg font-semibold text-zinc-900">
-                  Top 10 Areas by Activity
+            {/* Top Areas — Mobile cards + Desktop table */}
+            <div className="bg-white rounded-xl md:rounded-2xl border border-zinc-200 overflow-hidden">
+              <div className="px-4 md:px-6 py-4 border-b border-zinc-100 flex items-baseline justify-between">
+                <h2 className="text-base md:text-lg font-semibold text-zinc-900">
+                  Top Areas by Activity
                 </h2>
                 <Link
                   href="/areas"
                   className="text-xs text-blue-600 hover:underline"
                 >
-                  View all areas →
+                  View all →
                 </Link>
               </div>
-              <div className="overflow-x-auto">
+
+              {/* Mobile list */}
+              <div className="md:hidden divide-y divide-zinc-100">
+                {data.top_areas.map((area, i) => (
+                  <Link
+                    key={area.area_name}
+                    href={`/areas/${slugify(area.area_name)}`}
+                    className="block px-4 py-3 active:bg-zinc-50"
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2.5">
+                        <span className="w-6 h-6 flex items-center justify-center bg-zinc-100 rounded text-xs font-semibold text-zinc-600 flex-shrink-0">
+                          {i + 1}
+                        </span>
+                        <span className="font-medium text-zinc-900 text-sm">
+                          {displayName(area.area_name)}
+                        </span>
+                      </div>
+                      <span className="text-zinc-400 text-xs">→</span>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2 pl-8">
+                      <div>
+                        <div className="text-[10px] uppercase text-zinc-400">
+                          Sales
+                        </div>
+                        <div className="text-xs font-medium text-zinc-700">
+                          {area.transaction_count.toLocaleString()}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-[10px] uppercase text-zinc-400">
+                          Median
+                        </div>
+                        <div className="text-xs font-semibold text-zinc-900">
+                          {formatCompact(area.median_price_aed)}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-[10px] uppercase text-zinc-400">
+                          Volume
+                        </div>
+                        <div className="text-xs font-medium text-zinc-700">
+                          {formatCompact(area.volume_aed)}
+                        </div>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+
+              {/* Desktop table */}
+              <div className="hidden md:block overflow-x-auto">
                 <table className="w-full">
                   <thead className="bg-zinc-50 border-b border-zinc-200">
                     <tr>
@@ -151,9 +209,7 @@ export default async function MarketPage() {
                               href={`/areas/${slugify(area.area_name)}`}
                               className="font-medium text-zinc-900 hover:text-blue-600 transition"
                             >
-                              {area.area_name
-                                .toLowerCase()
-                                .replace(/\b\w/g, (c) => c.toUpperCase())}
+                              {displayName(area.area_name)}
                             </Link>
                           </div>
                         </td>
