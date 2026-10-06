@@ -2,7 +2,19 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { compareAreas, searchAreas, type CompareAreaRow, type AreaSearchRow } from "@/lib/api";
+import {
+  compareAreas,
+  compareMonthly,
+  searchAreas,
+  type CompareAreaRow,
+  type AreaSearchRow,
+  type CompareMonthlyRow,
+} from "@/lib/api";
+import {
+  ComparePriceChart,
+  CompareSqftChart,
+  CompareTrendChart,
+} from "./CompareCharts";
 
 function formatAED(value: number | null): string {
   if (value == null) return "-";
@@ -16,35 +28,44 @@ function formatCompact(value: number | null): string {
   return String(Math.round(value));
 }
 
+function displayName(name: string): string {
+  return name.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
 const DEFAULT_AREAS = ["Dubai Marina", "Jumeirah Village Circle", "Business Bay"];
+
+type ChartTab = "price" | "sqft" | "trend";
 
 export default function CompareClient() {
   const [selected, setSelected] = useState<string[]>(DEFAULT_AREAS);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<AreaSearchRow[]>([]);
   const [result, setResult] = useState<CompareAreaRow[] | null>(null);
+  const [monthly, setMonthly] = useState<CompareMonthlyRow[]>([]);
   const [missing, setMissing] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [mobileTab, setMobileTab] = useState<ChartTab>("price");
 
-  // Fetch comparison
   useEffect(() => {
     if (selected.length < 2) {
       setResult(null);
+      setMonthly([]);
       return;
     }
     setLoading(true);
     setError(null);
-    compareAreas(selected)
-      .then((res) => {
-        setResult(res.data);
-        setMissing(res.missing);
+
+    Promise.all([compareAreas(selected), compareMonthly(selected)])
+      .then(([compareRes, monthlyRes]) => {
+        setResult(compareRes.data);
+        setMissing(compareRes.missing);
+        setMonthly(monthlyRes.data);
       })
       .catch((e) => setError(e instanceof Error ? e.message : "Failed"))
       .finally(() => setLoading(false));
   }, [selected]);
 
-  // Search areas
   useEffect(() => {
     if (searchQuery.length < 2) {
       setSearchResults([]);
@@ -70,35 +91,29 @@ export default function CompareClient() {
     setSelected(selected.filter((a) => a !== name));
   }
 
-  // Find max values for bar scaling
-  const maxMedian = result ? Math.max(...result.map((r) => Number(r.median_price_aed) || 0)) : 1;
-  const maxSqft = result ? Math.max(...result.map((r) => Number(r.median_aed_sqft) || 0)) : 1;
-  const maxTx = result ? Math.max(...result.map((r) => r.transaction_count)) : 1;
-
   return (
     <div>
-      {/* Area selector */}
-      <div className="bg-white rounded-2xl border border-zinc-200 p-6 mb-6">
+      {/* Selector */}
+      <div className="bg-white rounded-xl md:rounded-2xl border border-zinc-200 p-4 md:p-6 mb-4 md:mb-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-sm font-semibold text-zinc-900">
+          <h2 className="text-xs md:text-sm font-semibold text-zinc-900">
             Selected Areas ({selected.length}/6)
           </h2>
-          <span className="text-xs text-zinc-500">
-            {selected.length < 2 ? "Add at least 2 areas" : "Comparing"}
+          <span className="text-[10px] md:text-xs text-zinc-500">
+            {selected.length < 2 ? "Add at least 2" : "Comparing"}
           </span>
         </div>
 
-        {/* Selected chips */}
         <div className="flex flex-wrap gap-2 mb-4">
           {selected.map((area) => (
             <span
               key={area}
-              className="inline-flex items-center gap-2 bg-blue-50 text-blue-800 text-sm px-3 py-1.5 rounded-lg border border-blue-200"
+              className="inline-flex items-center gap-1.5 bg-blue-50 text-blue-800 text-xs md:text-sm px-2.5 md:px-3 py-1.5 rounded-lg border border-blue-200"
             >
-              {area}
+              <span className="max-w-[120px] md:max-w-none truncate">{area}</span>
               <button
                 onClick={() => removeArea(area)}
-                className="hover:bg-blue-100 rounded-full w-4 h-4 flex items-center justify-center text-xs"
+                className="hover:bg-blue-100 rounded-full w-4 h-4 flex items-center justify-center text-xs flex-shrink-0"
                 aria-label={`Remove ${area}`}
               >
                 ×
@@ -107,15 +122,14 @@ export default function CompareClient() {
           ))}
         </div>
 
-        {/* Search input */}
         {selected.length < 6 && (
           <div className="relative">
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search for an area to add (e.g., Arjan, Majan)..."
-              className="w-full px-4 py-2.5 text-sm border border-zinc-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+              placeholder="Search for an area to add..."
+              className="w-full px-3 md:px-4 py-2.5 text-sm border border-zinc-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
             />
             {searchResults.length > 0 && (
               <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-zinc-200 rounded-lg shadow-lg z-20 max-h-64 overflow-y-auto">
@@ -123,13 +137,13 @@ export default function CompareClient() {
                   <button
                     key={r.area_name}
                     onClick={() => addArea(r.area_name)}
-                    className="w-full text-left px-4 py-2.5 hover:bg-zinc-50 text-sm flex items-center justify-between"
+                    className="w-full text-left px-3 md:px-4 py-2.5 hover:bg-zinc-50 text-sm flex items-center justify-between"
                   >
-                    <span className="text-zinc-900">
-                      {r.area_name.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase())}
+                    <span className="text-zinc-900 truncate">
+                      {displayName(r.area_name)}
                     </span>
-                    <span className="text-xs text-zinc-400">
-                      {r.total_transactions.toLocaleString()} sales
+                    <span className="text-xs text-zinc-400 flex-shrink-0 ml-2">
+                      {r.total_transactions.toLocaleString()}
                     </span>
                   </button>
                 ))}
@@ -152,7 +166,7 @@ export default function CompareClient() {
       )}
 
       {loading && (
-        <div className="bg-white rounded-2xl border border-zinc-200 p-12 text-center">
+        <div className="bg-white rounded-xl md:rounded-2xl border border-zinc-200 p-8 md:p-12 text-center">
           <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-sm text-zinc-600">Comparing areas...</p>
         </div>
@@ -160,74 +174,145 @@ export default function CompareClient() {
 
       {result && !loading && result.length >= 2 && (
         <>
-          {/* Median Price Comparison */}
-          <div className="bg-white rounded-2xl border border-zinc-200 p-6 md:p-8 mb-6">
-            <h2 className="text-base font-semibold text-zinc-900 mb-6">
-              Median Price (AED)
-            </h2>
-            <div className="space-y-4">
-              {result.map((r) => {
-                const pct = (Number(r.median_price_aed) / maxMedian) * 100;
-                return (
-                  <div key={r.area_name}>
-                    <div className="flex items-baseline justify-between mb-1.5">
-                      <span className="text-sm text-zinc-700 font-medium">
-                        {r.area_name.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase())}
-                      </span>
-                      <span className="text-sm font-bold text-zinc-900">
-                        AED {formatAED(r.median_price_aed)}
-                      </span>
-                    </div>
-                    <div className="h-2 bg-zinc-100 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-blue-500 rounded-full transition-all"
-                        style={{ width: `${pct}%` }}
-                      ></div>
-                    </div>
-                  </div>
-                );
-              })}
+          {/* Mobile: Tabbed charts */}
+          <div className="lg:hidden mb-4">
+            <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden">
+              <div className="flex border-b border-zinc-100">
+                {(
+                  [
+                    { key: "price", label: "Median Price" },
+                    { key: "sqft", label: "AED/sqft" },
+                    { key: "trend", label: "Trend" },
+                  ] as { key: ChartTab; label: string }[]
+                ).map((tab) => (
+                  <button
+                    key={tab.key}
+                    onClick={() => setMobileTab(tab.key)}
+                    className={`flex-1 py-3 text-xs font-medium transition ${
+                      mobileTab === tab.key
+                        ? "text-blue-600 border-b-2 border-blue-600 bg-blue-50/30"
+                        : "text-zinc-500 hover:text-zinc-900"
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+              <div className="p-4">
+                {mobileTab === "price" && <ComparePriceChart data={result} />}
+                {mobileTab === "sqft" && <CompareSqftChart data={result} />}
+                {mobileTab === "trend" && monthly.length > 0 && (
+                  <CompareTrendChart data={monthly} areas={selected} />
+                )}
+              </div>
             </div>
           </div>
 
-          {/* AED/sqft Comparison */}
-          <div className="bg-white rounded-2xl border border-zinc-200 p-6 md:p-8 mb-6">
-            <h2 className="text-base font-semibold text-zinc-900 mb-6">
-              Price per Square Foot (AED/sqft)
-            </h2>
-            <div className="space-y-4">
-              {result.map((r) => {
-                const pct = (Number(r.median_aed_sqft) / maxSqft) * 100;
-                return (
-                  <div key={r.area_name}>
-                    <div className="flex items-baseline justify-between mb-1.5">
-                      <span className="text-sm text-zinc-700 font-medium">
-                        {r.area_name.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase())}
-                      </span>
-                      <span className="text-sm font-bold text-zinc-900">
-                        {formatAED(r.median_aed_sqft)}
-                      </span>
-                    </div>
-                    <div className="h-2 bg-zinc-100 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-emerald-500 rounded-full transition-all"
-                        style={{ width: `${pct}%` }}
-                      ></div>
-                    </div>
-                  </div>
-                );
-              })}
+          {/* Desktop: All 3 charts stacked */}
+          <div className="hidden lg:block">
+            <div className="bg-white rounded-2xl border border-zinc-200 p-8 mb-6">
+              <h2 className="text-base font-semibold text-zinc-900 mb-6">
+                Median Price (AED)
+              </h2>
+              <ComparePriceChart data={result} />
             </div>
+
+            <div className="bg-white rounded-2xl border border-zinc-200 p-8 mb-6">
+              <h2 className="text-base font-semibold text-zinc-900 mb-6">
+                Price per Square Foot (AED/sqft)
+              </h2>
+              <CompareSqftChart data={result} />
+            </div>
+
+            {monthly.length > 0 && (
+              <div className="bg-white rounded-2xl border border-zinc-200 p-8 mb-6">
+                <div className="mb-6">
+                  <h2 className="text-base font-semibold text-zinc-900">
+                    Monthly Sales Activity
+                  </h2>
+                  <p className="text-xs text-zinc-500 mt-1">
+                    Transaction count per month per area
+                  </p>
+                </div>
+                <CompareTrendChart data={monthly} areas={selected} />
+              </div>
+            )}
           </div>
 
-          {/* Side-by-side table */}
-          <div className="bg-white rounded-2xl border border-zinc-200 overflow-hidden mb-6">
-            <div className="px-6 py-4 border-b border-zinc-100">
-              <h2 className="text-base font-semibold text-zinc-900">
+          {/* Side-by-side — Mobile cards + Desktop table */}
+          <div className="bg-white rounded-xl md:rounded-2xl border border-zinc-200 overflow-hidden mb-6">
+            <div className="px-4 md:px-6 py-4 border-b border-zinc-100">
+              <h2 className="text-base md:text-lg font-semibold text-zinc-900">
                 Side-by-Side Comparison
               </h2>
             </div>
-            <div className="overflow-x-auto">
+
+            {/* Mobile cards */}
+            <div className="lg:hidden divide-y divide-zinc-100">
+              {result.map((r) => {
+                const slug = r.area_name.toLowerCase().trim().replace(/\s+/g, "-");
+                return (
+                  <div key={r.area_name} className="p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <Link
+                        href={`/areas/${slug}`}
+                        className="font-semibold text-zinc-900 text-sm hover:text-blue-600"
+                      >
+                        {displayName(r.area_name)}
+                      </Link>
+                      <span
+                        className={`text-[10px] px-2 py-0.5 rounded-full ${
+                          r.data_coverage === "High"
+                            ? "bg-green-100 text-green-800"
+                            : r.data_coverage === "Medium"
+                            ? "bg-yellow-100 text-yellow-800"
+                            : "bg-zinc-100 text-zinc-600"
+                        }`}
+                      >
+                        {r.data_coverage}
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <div className="text-[10px] uppercase text-zinc-400">
+                          Median
+                        </div>
+                        <div className="text-xs font-semibold text-zinc-900">
+                          AED {formatCompact(r.median_price_aed)}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-[10px] uppercase text-zinc-400">
+                          AED / sqft
+                        </div>
+                        <div className="text-xs font-medium text-zinc-700">
+                          {formatAED(r.median_aed_sqft)}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-[10px] uppercase text-zinc-400">
+                          Sales
+                        </div>
+                        <div className="text-xs font-medium text-zinc-700">
+                          {r.transaction_count.toLocaleString()}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-[10px] uppercase text-zinc-400">
+                          P25-P75
+                        </div>
+                        <div className="text-xs text-zinc-600">
+                          {formatCompact(r.p25_price_aed)}–{formatCompact(r.p75_price_aed)}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Desktop table */}
+            <div className="hidden lg:block overflow-x-auto">
               <table className="w-full">
                 <thead className="bg-zinc-50 border-b border-zinc-200">
                   <tr>
@@ -239,7 +324,7 @@ export default function CompareClient() {
                         key={r.area_name}
                         className="text-right px-6 py-3 text-xs font-semibold text-zinc-600 uppercase"
                       >
-                        {r.area_name.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase())}
+                        {displayName(r.area_name)}
                       </th>
                     ))}
                   </tr>
@@ -334,7 +419,7 @@ export default function CompareClient() {
             </div>
           </div>
 
-          <div className="text-xs text-zinc-500 text-center">
+          <div className="text-[11px] md:text-xs text-zinc-500 text-center">
             Source: Dubai Land Department — Transactions dataset. Sales only.
             Coverage shown per area. Not investment advice.
           </div>
@@ -342,7 +427,7 @@ export default function CompareClient() {
       )}
 
       {result && result.length < 2 && !loading && (
-        <div className="bg-white rounded-2xl border border-dashed border-zinc-300 p-12 text-center">
+        <div className="bg-white rounded-xl md:rounded-2xl border border-dashed border-zinc-300 p-8 md:p-12 text-center">
           <p className="text-sm text-zinc-500">
             Add at least 2 areas above to see a comparison.
           </p>
