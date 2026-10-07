@@ -2,7 +2,6 @@ import Link from "next/link";
 import RealityCheckForm from "@/components/RealityCheckForm";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import type { AreaSummary } from "@/lib/api";
 import { listAreas } from "@/lib/queries";
 
 function slugify(name: string): string {
@@ -21,13 +20,13 @@ function formatCompact(value: number | null): string {
 }
 
 export default async function Home() {
-  let topAreas: AreaSummary[] = [];
-  try {
-    const data = await listAreas(5);
-    topAreas = data.data;
-  } catch {
-    topAreas = [];
-  }
+  let topAreas: Array<{
+  area_name: string;
+  total_transactions: number;
+  median_price_aed: number | null;
+  median_aed_sqft: number | null;
+  last_transaction: string | null;
+}> = [];
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-zinc-50 to-white">

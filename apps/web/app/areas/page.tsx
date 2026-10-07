@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import Header from "@/components/Header";
-import type { AreaSummary } from "@/lib/api";
 import { listAreas } from "@/lib/queries";
 
 export const metadata: Metadata = {
@@ -31,7 +30,7 @@ function formatCompact(value: number | null): string {
 }
 
 export default async function AreasPage() {
-  let areas: AreaSummary[] = [];
+  let areas: any[] = [];
   let error: string | null = null;
 
   try {

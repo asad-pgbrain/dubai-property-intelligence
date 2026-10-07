@@ -1,6 +1,91 @@
 import { sql } from "./db";
 
 // ============================================================
+// Types
+// ============================================================
+interface StatsRow {
+  total_transactions: number;
+  total_volume_aed: number;
+  median_price_aed: number;
+  first_date: string;
+  last_date: string;
+  areas_count: number;
+}
+
+interface MonthlyRow {
+  month: string;
+  transaction_count: number;
+  volume_aed: number;
+  median_price_aed: number;
+}
+
+interface TopAreaRow {
+  area_name: string;
+  transaction_count: number;
+  median_price_aed: number;
+  volume_aed: number;
+}
+
+interface AreaSummaryRow {
+  area_name: string;
+  total_transactions: number;
+  median_price_aed: number | null;
+  median_aed_sqft: number | null;
+  last_transaction: string | null;
+}
+
+interface AreaDetailRow {
+  area_name: string;
+  property_type: string;
+  transaction_count: number;
+  median_price_aed: number;
+  median_aed_sqft: number;
+  p25_price_aed: number;
+  p75_price_aed: number;
+  data_coverage: string;
+  first_transaction: string;
+  last_transaction: string;
+}
+
+interface CompareRow {
+  area_name: string;
+  property_type: string;
+  transaction_count: number;
+  median_price_aed: number;
+  median_aed_sqft: number;
+  p25_price_aed: number;
+  p75_price_aed: number;
+  data_coverage: string;
+  first_transaction: string;
+  last_transaction: string;
+}
+
+interface CompareMonthlyRow {
+  area_name: string;
+  month: string;
+  transaction_count: number;
+  median_price_aed: number;
+}
+
+interface SearchRow {
+  area_name: string;
+  total_transactions: number;
+}
+
+interface RealityCheckRow {
+  tier: number;
+  comp_count: number;
+  median_price_aed: number;
+  p25_price_aed: number;
+  p75_price_aed: number;
+  median_aed_sqft: number;
+  min_size_sqm: number;
+  max_size_sqm: number;
+  first_date: string;
+  last_date: string;
+}
+
+// ============================================================
 // Health
 // ============================================================
 export async function checkHealth() {
@@ -12,7 +97,7 @@ export async function checkHealth() {
 // Market Overview
 // ============================================================
 export async function getMarketOverview() {
-  const statsRows = await sql`
+  const statsRows = (await sql`
     SELECT
       COUNT(*)::int AS total_transactions,
       COALESCE(SUM(amount), 0)::bigint AS total_volume_aed,
@@ -22,9 +107,9 @@ export async function getMarketOverview() {
       COUNT(DISTINCT area_id)::int AS areas_count
     FROM core.transactions
     WHERE transaction_type = 'Sales' AND amount > 0
-  `;
+  `) as StatsRow[];
 
-  const topAreas = await sql`
+  const topAreas = (await sql`
     SELECT
       a.normalized_name AS area_name,
       COUNT(*)::int AS transaction_count,
@@ -36,9 +121,9 @@ export async function getMarketOverview() {
     GROUP BY a.normalized_name
     ORDER BY transaction_count DESC
     LIMIT 10
-  `;
+  `) as TopAreaRow[];
 
-  const monthlyTrend = await sql`
+  const monthlyTrend = (await sql`
     WITH monthly AS (
       SELECT
         DATE_TRUNC('month', transaction_date) AS month_ts,
@@ -56,7 +141,7 @@ export async function getMarketOverview() {
       median_price_aed
     FROM monthly
     ORDER BY month_ts
-  `;
+  `) as MonthlyRow[];
 
   return {
     stats: statsRows[0],
@@ -70,7 +155,7 @@ export async function getMarketOverview() {
 // Areas List
 // ============================================================
 export async function listAreas(limit = 100, minTransactions = 10) {
-  const rows = await sql`
+  const rows = (await sql`
     SELECT
       area_name,
       SUM(transaction_count)::int AS total_transactions,
@@ -83,7 +168,7 @@ export async function listAreas(limit = 100, minTransactions = 10) {
     HAVING SUM(transaction_count) >= ${minTransactions}
     ORDER BY total_transactions DESC
     LIMIT ${limit}
-  `;
+  `) as AreaSummaryRow[];
 
   return {
     data: rows,
@@ -96,7 +181,7 @@ export async function listAreas(limit = 100, minTransactions = 10) {
 // Area Detail
 // ============================================================
 export async function getAreaDetail(areaName: string) {
-  const rows = await sql`
+  const rows = (await sql`
     SELECT
       area_name,
       property_type,
@@ -111,7 +196,7 @@ export async function getAreaDetail(areaName: string) {
     FROM analytics.area_market_summary
     WHERE UPPER(TRIM(area_name)) = UPPER(TRIM(${areaName}))
     ORDER BY transaction_count DESC
-  `;
+  `) as AreaDetailRow[];
 
   return {
     area: areaName,
@@ -124,7 +209,7 @@ export async function getAreaDetail(areaName: string) {
 // Area Monthly Trend
 // ============================================================
 export async function getAreaMonthly(areaName: string) {
-  const rows = await sql`
+  const rows = (await sql`
     WITH monthly AS (
       SELECT
         DATE_TRUNC('month', t.transaction_date) AS month_ts,
@@ -145,7 +230,7 @@ export async function getAreaMonthly(areaName: string) {
       median_price_aed
     FROM monthly
     ORDER BY month_ts
-  `;
+  `) as MonthlyRow[];
 
   return {
     area: areaName,
@@ -160,7 +245,7 @@ export async function getAreaMonthly(areaName: string) {
 // ============================================================
 export async function searchAreas(q: string, limit = 20) {
   const pattern = `%${q}%`;
-  const rows = await sql`
+  const rows = (await sql`
     SELECT DISTINCT
       area_name,
       SUM(transaction_count)::int AS total_transactions
@@ -171,7 +256,7 @@ export async function searchAreas(q: string, limit = 20) {
     HAVING SUM(transaction_count) >= 20
     ORDER BY total_transactions DESC
     LIMIT ${limit}
-  `;
+  `) as SearchRow[];
 
   return { data: rows, count: rows.length };
 }
@@ -181,12 +266,17 @@ export async function searchAreas(q: string, limit = 20) {
 // ============================================================
 export async function compareAreas(areas: string[]) {
   if (areas.length < 2 || areas.length > 6) {
-    return { data: [], missing: [], count: 0, source: { name: "DLD", dataset: "Transactions" } };
+    return {
+      data: [] as CompareRow[],
+      missing: [] as string[],
+      count: 0,
+      source: { name: "DLD", dataset: "Transactions" },
+    };
   }
 
   const normalized = areas.map((a) => a.trim().toUpperCase());
 
-  const rows = await sql`
+  const rows = (await sql`
     SELECT
       area_name,
       property_type,
@@ -202,12 +292,10 @@ export async function compareAreas(areas: string[]) {
     WHERE UPPER(TRIM(area_name)) = ANY(${normalized})
       AND property_type = 'Unit'
     ORDER BY transaction_count DESC
-  `;
+  `) as CompareRow[];
 
-  const found = rows.map((r: { area_name: string }) => r.area_name);
-  const missing = areas.filter(
-    (a) => !found.includes(a.trim().toUpperCase())
-  );
+  const found = rows.map((r) => r.area_name);
+  const missing = areas.filter((a) => !found.includes(a.trim().toUpperCase()));
 
   return {
     data: rows,
@@ -222,12 +310,12 @@ export async function compareAreas(areas: string[]) {
 // ============================================================
 export async function compareMonthly(areas: string[]) {
   if (areas.length < 2 || areas.length > 6) {
-    return { data: [], count: 0 };
+    return { data: [] as CompareMonthlyRow[], count: 0 };
   }
 
   const normalized = areas.map((a) => a.trim().toUpperCase());
 
-  const rows = await sql`
+  const rows = (await sql`
     WITH monthly AS (
       SELECT
         a.normalized_name AS area_name,
@@ -248,7 +336,7 @@ export async function compareMonthly(areas: string[]) {
       median_price_aed
     FROM monthly
     ORDER BY area_name, month_ts
-  `;
+  `) as CompareMonthlyRow[];
 
   return { data: rows, count: rows.length };
 }
@@ -263,7 +351,7 @@ export async function realityCheck(input: {
   size_sqm?: number | null;
   asking_price?: number | null;
 }) {
-  const rows = await sql`
+  const rows = (await sql`
     SELECT
       tier,
       comp_count,
@@ -283,7 +371,7 @@ export async function realityCheck(input: {
       20,
       5
     )
-  `;
+  `) as RealityCheckRow[];
 
   if (rows.length === 0) {
     throw new Error("No market data found");
@@ -309,7 +397,7 @@ export async function realityCheck(input: {
 
   const response: {
     input: typeof input;
-    market: typeof result;
+    market: RealityCheckRow;
     coverage: string;
     tier_explanation: string;
     comparison?: {

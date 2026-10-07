@@ -34,7 +34,7 @@ export default async function AreaDetailPage({ params }: PageProps) {
   const displayName = slug.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
   let detail;
-  let monthly: { month: string; transaction_count: number; volume_aed: number; median_price_aed: number }[] = [];
+  let monthly: any[] = [];
   try {
     detail = await getAreaDetail(areaName);
   } catch {
