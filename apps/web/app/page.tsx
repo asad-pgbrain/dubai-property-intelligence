@@ -1,3 +1,4 @@
+import { DATA_STATS } from "@/lib/constants";
 import Link from "next/link";
 import RealityCheckForm from "@/components/RealityCheckForm";
 import Header from "@/components/Header";
@@ -38,7 +39,7 @@ export default async function Home() {
           <div className="text-center mb-10 md:mb-12 max-w-3xl mx-auto">
             <div className="inline-flex items-center gap-2 bg-blue-50 text-blue-700 text-xs font-medium px-3 py-1.5 rounded-full mb-5">
               <span className="w-1.5 h-1.5 bg-blue-600 rounded-full"></span>
-              161,000+ transactions from Dubai Land Department
+              {DATA_STATS.totalSales.toLocaleString()} registered sales from Dubai Land Department
             </div>
             <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-zinc-900 mb-4 tracking-tight leading-tight">
               Dubai Property Intelligence,
@@ -314,11 +315,11 @@ export default async function Home() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="text-center">
                 <div className="text-2xl md:text-3xl font-bold text-zinc-900 mb-1">
-                  161,561
-                </div>
-                <div className="text-xs text-zinc-500 uppercase tracking-wide">
-                  Transactions analyzed
-                </div>
+  {DATA_STATS.totalSales.toLocaleString()}
+</div>
+<div className="text-xs text-zinc-500 uppercase tracking-wide">
+  Registered sales analyzed
+</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl md:text-3xl font-bold text-zinc-900 mb-1">

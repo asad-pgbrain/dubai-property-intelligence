@@ -1,3 +1,4 @@
+import { DATA_STATS } from "@/lib/constants";
 import type { Metadata } from "next";
 import Link from "next/link";
 import Header from "@/components/Header";
@@ -53,7 +54,7 @@ export default async function AreasPage() {
           </h1>
           <p className="text-sm md:text-base text-zinc-600 max-w-3xl">
             Median property prices and transaction activity across Dubai communities.
-            Based on {totalTx.toLocaleString()} registered sales from the Dubai Land Department.
+            Based on {DATA_STATS.totalSales.toLocaleString()} registered sales across {DATA_STATS.totalAreas} Dubai areas ({DATA_STATS.periodLabel}).
           </p>
         </div>
 

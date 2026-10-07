@@ -1,3 +1,4 @@
+import { DATA_STATS } from "@/lib/constants";
 import type { Metadata } from "next";
 import Link from "next/link";
 import Header from "@/components/Header";
@@ -78,20 +79,20 @@ export default function MethodologyPage() {
                     Period covered
                   </dt>
                   <dd className="text-zinc-900 font-medium">
-                    January 2026 – October 2026
+                    {DATA_STATS.periodLabel}
                   </dd>
                 </div>
                 <div>
                   <dt className="text-xs uppercase tracking-wide text-zinc-500 mb-1">
-                    Transactions analyzed
+                    Registered sales analyzed
                   </dt>
-                  <dd className="text-zinc-900 font-medium">161,561</dd>
+                  <dd className="text-zinc-900 font-medium">{DATA_STATS.totalSales.toLocaleString()}</dd>
                 </div>
                 <div>
                   <dt className="text-xs uppercase tracking-wide text-zinc-500 mb-1">
                     Areas covered
                   </dt>
-                  <dd className="text-zinc-900 font-medium">273</dd>
+                  <dd className="text-zinc-900 font-medium">{DATA_STATS.totalAreas}</dd>
                 </div>
                 <div>
                   <dt className="text-xs uppercase tracking-wide text-zinc-500 mb-1">
