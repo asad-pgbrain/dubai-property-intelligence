@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import Header from "@/components/Header";
 import MonthlyChart from "@/components/MonthlyChart";
-import { getMarketOverview } from "@/lib/api";
+import { getMarketOverview } from "@/lib/queries";
 
 export const metadata: Metadata = {
   title: "Dubai Property Market Overview 2026",

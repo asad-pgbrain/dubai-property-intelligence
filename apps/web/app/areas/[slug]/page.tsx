@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import MonthlyChart from "@/components/MonthlyChart";
-import { getAreaDetail, getAreaMonthly } from "@/lib/api";
+import { getAreaDetail, getAreaMonthly } from "@/lib/queries";
 
 interface PageProps {
   params: Promise<{ slug: string }>;

@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import Header from "@/components/Header";
-import { listAreas, type AreaSummary } from "@/lib/api";
+import type { AreaSummary } from "@/lib/api";
+import { listAreas } from "@/lib/queries";
 
 export const metadata: Metadata = {
   title: "Dubai Areas - Property Prices & Market Data",

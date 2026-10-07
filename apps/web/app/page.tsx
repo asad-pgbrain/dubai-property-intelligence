@@ -2,7 +2,8 @@ import Link from "next/link";
 import RealityCheckForm from "@/components/RealityCheckForm";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import { listAreas, type AreaSummary } from "@/lib/api";
+import type { AreaSummary } from "@/lib/api";
+import { listAreas } from "@/lib/queries";
 
 function slugify(name: string): string {
   return name.toLowerCase().trim().replace(/\s+/g, "-");

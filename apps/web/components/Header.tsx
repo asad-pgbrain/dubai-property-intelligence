@@ -18,16 +18,13 @@ export default function Header() {
   return (
     <header className="border-b border-zinc-200 bg-white sticky top-0 z-30">
       <div className="max-w-7xl mx-auto px-4 md:px-6 py-3 md:py-4 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-2.5">
-          <div className="w-9 h-9 bg-blue-600 rounded-lg flex items-center justify-center">
-            <span className="text-white font-bold text-xs tracking-tight">DPI</span>
-          </div>
-          <span className="font-semibold text-zinc-900 text-sm hidden sm:inline">
-            Dubai Property Intelligence
-          </span>
-          <span className="font-semibold text-zinc-900 text-sm sm:hidden">
-            DPI
-          </span>
+        {/* Full logo — bigger size */}
+        <Link href="/" className="flex items-center flex-shrink-0">
+          <img
+            src="/logo.svg"
+            alt="Dubai Property Intelligence"
+            className="h-14 sm:h-16 md:h-20 w-auto"
+          />
         </Link>
 
         {/* Desktop nav */}
