@@ -41,7 +41,105 @@ export async function searchAreas(q: string, limit = 20) {
 
   return { data: rows, count: rows.length };
 }
+// ============================================================
+// Area Bedroom Split
+// ============================================================
+interface BedroomSplitRow {
+  rooms: string;
+  transaction_count: number;
+  median_price_aed: number;
+  median_aed_sqft: number;
+}
 
+export async function getAreaBedroomSplit(areaName: string) {
+  const rows = (await sql`
+    SELECT
+      rooms,
+      COUNT(*)::int AS transaction_count,
+      ROUND(PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY amount)::numeric)::bigint AS median_price_aed,
+      ROUND(PERCENTILE_CONT(0.5) WITHIN GROUP (
+        ORDER BY amount / NULLIF(property_size_sqm * 10.7639104167, 0)
+      )::numeric)::bigint AS median_aed_sqft
+    FROM core.transactions t
+    JOIN core.areas a ON t.area_id = a.area_id
+    WHERE UPPER(TRIM(a.normalized_name)) = UPPER(TRIM(${areaName}))
+      AND t.transaction_type = 'Sales'
+      AND t.amount > 0
+      AND t.rooms IS NOT NULL
+      AND t.property_size_sqm > 0
+    GROUP BY rooms
+    HAVING COUNT(*) >= 5
+    ORDER BY transaction_count DESC
+    LIMIT 10
+  `) as BedroomSplitRow[];
+  return rows;
+}
+
+// ============================================================
+// Area Off-Plan vs Ready Split
+// ============================================================
+interface OffPlanSplitRow {
+  is_offplan: string;
+  transaction_count: number;
+  median_price_aed: number;
+  median_aed_sqft: number;
+}
+
+export async function getAreaOffPlanSplit(areaName: string) {
+  const rows = (await sql`
+    SELECT
+      is_offplan,
+      COUNT(*)::int AS transaction_count,
+      ROUND(PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY amount)::numeric)::bigint AS median_price_aed,
+      ROUND(PERCENTILE_CONT(0.5) WITHIN GROUP (
+        ORDER BY amount / NULLIF(property_size_sqm * 10.7639104167, 0)
+      )::numeric)::bigint AS median_aed_sqft
+    FROM core.transactions t
+    JOIN core.areas a ON t.area_id = a.area_id
+    WHERE UPPER(TRIM(a.normalized_name)) = UPPER(TRIM(${areaName}))
+      AND t.transaction_type = 'Sales'
+      AND t.amount > 0
+      AND t.is_offplan IS NOT NULL
+      AND t.property_size_sqm > 0
+    GROUP BY is_offplan
+    ORDER BY transaction_count DESC
+  `) as OffPlanSplitRow[];
+  return rows;
+}
+
+// ============================================================
+// Related Areas (similar median price)
+// ============================================================
+interface RelatedAreaRow {
+  area_name: string;
+  transaction_count: number;
+  median_price_aed: number;
+}
+
+export async function getRelatedAreas(areaName: string, limit = 5) {
+  const rows = (await sql`
+    WITH target AS (
+      SELECT median_price
+      FROM analytics.area_market_summary
+      WHERE UPPER(TRIM(area_name)) = UPPER(TRIM(${areaName}))
+        AND property_type = 'Unit'
+      ORDER BY transaction_count DESC
+      LIMIT 1
+    )
+    SELECT
+      s.area_name,
+      s.transaction_count,
+      ROUND(s.median_price)::bigint AS median_price_aed
+    FROM analytics.area_market_summary s, target
+    WHERE s.property_type = 'Unit'
+      AND UPPER(TRIM(s.area_name)) != UPPER(TRIM(${areaName}))
+      AND s.median_price BETWEEN target.median_price * 0.85 AND target.median_price * 1.15
+      AND s.transaction_count >= 30
+    ORDER BY s.transaction_count DESC
+    LIMIT ${limit}
+  `) as RelatedAreaRow[];
+  return rows;
+}
 
 // ============================================================
 // Types

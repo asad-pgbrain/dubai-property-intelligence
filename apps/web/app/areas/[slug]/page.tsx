@@ -1,11 +1,18 @@
-import { getDisplayNameWithAlias } from "@/lib/aliases";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import MonthlyChart from "@/components/MonthlyChart";
-import { getAreaDetail, getAreaMonthly } from "@/lib/queries";
+import {
+  getAreaDetail,
+  getAreaMonthly,
+  getAreaBedroomSplit,
+  getAreaOffPlanSplit,
+  getRelatedAreas,
+} from "@/lib/queries";
+import { getDisplayNameWithAlias } from "@/lib/aliases";
+import { DATA_STATS } from "@/lib/constants";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -15,24 +22,41 @@ function slugToAreaName(slug: string): string {
   return slug.replace(/-/g, " ").toUpperCase();
 }
 
-function formatAED(value: number | null): string {
+function slugify(name: string): string {
+  return name.toLowerCase().trim().replace(/\s+/g, "-");
+}
+
+function formatAED(value: number | null | undefined): string {
   if (value == null) return "-";
   return new Intl.NumberFormat("en-US").format(Math.round(value));
 }
 
+function formatCompact(value: number | null | undefined): string {
+  if (value == null) return "-";
+  if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(2)}M`;
+  if (value >= 1_000) return `${(value / 1_000).toFixed(0)}K`;
+  return String(Math.round(value));
+}
+
+function displayName(name: string): string {
+  return name.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
-  const displayName = slug.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+  const displayNameFull = slug
+    .replace(/-/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase());
   const url = `https://dubai-property-intelligence-apps.vercel.app/areas/${slug}`;
 
   return {
-    title: `${displayName} Property Prices & Market Data`,
-    description: `Median property prices, AED/sqft, and transaction data for ${displayName}, Dubai. Based on official Dubai Land Department transactions.`,
+    title: `${displayNameFull} Property Prices & Market Data`,
+    description: `Median property prices, AED/sqft, and transaction data for ${displayNameFull}, Dubai. Based on official Dubai Land Department transactions.`,
     openGraph: {
       type: "article",
       url,
-      title: `${displayName} Property Prices | DPI`,
-      description: `Market data for ${displayName} — median prices, AED/sqft, and transaction trends from DLD.`,
+      title: `${displayNameFull} Property Prices | DPI`,
+      description: `Market data for ${displayNameFull} — median prices, AED/sqft, and transaction trends from DLD.`,
     },
   };
 }
@@ -40,25 +64,44 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 export default async function AreaDetailPage({ params }: PageProps) {
   const { slug } = await params;
   const areaName = slugToAreaName(slug);
-  const displayName = slug.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
-  const nameInfo = getDisplayNameWithAlias(areaName);    // ← YE NAYI LINE
+  const nameInfo = getDisplayNameWithAlias(areaName);
 
   let detail;
   let monthly: any[] = [];
+  let bedrooms: any[] = [];
+  let offplan: any[] = [];
+  let related: any[] = [];
+
   try {
     detail = await getAreaDetail(areaName);
   } catch {
     notFound();
   }
 
-  try {
-    const m = await getAreaMonthly(areaName);
-    monthly = m.data;
-  } catch {
-    monthly = [];
-  }
+  // Fetch optional data in parallel
+  const [monthlyRes, bedroomsRes, offplanRes, relatedRes] = await Promise.allSettled([
+    getAreaMonthly(areaName),
+    getAreaBedroomSplit(areaName),
+    getAreaOffPlanSplit(areaName),
+    getRelatedAreas(areaName, 5),
+  ]);
 
-  const primary = detail.data.find((d) => d.property_type === "Unit") || detail.data[0];
+  if (monthlyRes.status === "fulfilled") monthly = monthlyRes.value.data;
+  if (bedroomsRes.status === "fulfilled") bedrooms = bedroomsRes.value;
+  if (offplanRes.status === "fulfilled") offplan = offplanRes.value;
+  if (relatedRes.status === "fulfilled") related = relatedRes.value;
+
+  const primary = detail.data.find((d: any) => d.property_type === "Unit") || detail.data[0];
+
+  // Calculate off-plan percentages
+  const offplanTotal = offplan.reduce((sum, r) => sum + r.transaction_count, 0);
+  const offplanPct = offplanTotal
+    ? Math.round((offplan[0]?.transaction_count / offplanTotal) * 100)
+    : 0;
+
+  // Calculate bedroom total for percentage
+  const bedroomTotal = bedrooms.reduce((sum, r) => sum + r.transaction_count, 0);
+  const topBedroom = bedrooms[0];
 
   return (
     <div className="min-h-screen bg-zinc-50">
@@ -71,24 +114,71 @@ export default async function AreaDetailPage({ params }: PageProps) {
           <span className="mx-2">/</span>
           <Link href="/areas" className="hover:text-zinc-900">Areas</Link>
           <span className="mx-2">/</span>
-          <span className="text-zinc-900">{displayName}</span>
+          <span className="text-zinc-900">{nameInfo.primary}</span>
         </nav>
 
-        <div className="mb-6 md:mb-10">
+        {/* Title */}
+        <div className="mb-6 md:mb-8">
           <h1 className="text-2xl md:text-4xl font-bold text-zinc-900 mb-2 md:mb-3 tracking-tight">
-  {nameInfo.primary} Property Prices
-</h1>
-{nameInfo.alias && (
-  <p className="text-xs md:text-sm text-zinc-500 mb-2">
-    Also known as {nameInfo.alias} (DLD name)
-  </p>
-)}
-<p className="text-sm md:text-base text-zinc-600 max-w-3xl">
-  Registered transaction data for {nameInfo.primary} from the Dubai Land Department.
-</p>
+            {nameInfo.primary} Property Prices
+          </h1>
+          {nameInfo.alias && (
+            <p className="text-xs md:text-sm text-zinc-500 mb-2">
+              Also known as {nameInfo.alias} (DLD name)
+            </p>
+          )}
+          <p className="text-sm md:text-base text-zinc-600 max-w-3xl">
+            Registered transaction data for {nameInfo.primary} from the Dubai Land Department.
+          </p>
         </div>
 
-        {/* Market Summary */}
+        {/* ============================================ */}
+        {/* KEY FACTS — GEO optimized quotable block    */}
+        {/* ============================================ */}
+        {primary && (
+          <div className="bg-gradient-to-br from-blue-50 to-white rounded-xl md:rounded-2xl border border-blue-200 p-5 md:p-8 mb-6 md:mb-8">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+              <h2 className="text-sm font-semibold text-blue-900 uppercase tracking-wide">
+                Key Facts
+              </h2>
+            </div>
+            <ul className="space-y-2 md:space-y-3 text-sm md:text-base text-zinc-800 leading-relaxed">
+              <li>
+                <strong>{nameInfo.primary}&apos;s median sale price</strong> was{" "}
+                <strong>AED {formatAED(primary.median_price_aed)}</strong> from{" "}
+                {primary.first_transaction} to {primary.last_transaction} (
+                {primary.transaction_count.toLocaleString()} registered DLD sales).
+              </li>
+              <li>
+                <strong>Median price per square foot:</strong> AED{" "}
+                {formatAED(primary.median_aed_sqft)}.
+              </li>
+              {topBedroom && (
+                <li>
+                  <strong>Most active configuration:</strong> {topBedroom.rooms} —{" "}
+                  {Math.round((topBedroom.transaction_count / bedroomTotal) * 100)}% of sales.
+                </li>
+              )}
+              {offplan.length >= 2 && (
+                <li>
+                  <strong>Off-plan vs Ready:</strong> {offplanPct}% off-plan,{" "}
+                  {100 - offplanPct}% ready properties.
+                </li>
+              )}
+              <li>
+                <strong>Market data coverage:</strong> {primary.data_coverage}.
+              </li>
+            </ul>
+            <div className="mt-4 pt-4 border-t border-blue-200 text-xs text-blue-800">
+              Source: Dubai Land Department Transactions dataset · Sales only
+            </div>
+          </div>
+        )}
+
+        {/* ============================================ */}
+        {/* Market Summary (KPI grid)                    */}
+        {/* ============================================ */}
         {primary && (
           <div className="bg-white rounded-xl md:rounded-2xl shadow-sm border border-zinc-200 p-4 md:p-8 mb-6 md:mb-8">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4 md:mb-6">
@@ -138,7 +228,7 @@ export default async function AreaDetailPage({ params }: PageProps) {
                   25th - 75th
                 </div>
                 <div className="text-xs md:text-sm font-semibold text-zinc-700">
-                  {formatAED(primary.p25_price_aed)} - {formatAED(primary.p75_price_aed)}
+                  {formatCompact(primary.p25_price_aed)} - {formatCompact(primary.p75_price_aed)}
                 </div>
               </div>
             </div>
@@ -149,7 +239,9 @@ export default async function AreaDetailPage({ params }: PageProps) {
           </div>
         )}
 
-        {/* Monthly Chart */}
+        {/* ============================================ */}
+        {/* Monthly Chart                                */}
+        {/* ============================================ */}
         {monthly.length > 1 && (
           <div className="bg-white rounded-xl md:rounded-2xl p-4 md:p-8 border border-zinc-200 mb-6 md:mb-8">
             <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-2 mb-4 md:mb-6">
@@ -169,7 +261,203 @@ export default async function AreaDetailPage({ params }: PageProps) {
           </div>
         )}
 
-        {/* Property Types — Mobile cards + Desktop table */}
+        {/* ============================================ */}
+        {/* Bedroom Split                                */}
+        {/* ============================================ */}
+        {bedrooms.length > 0 && (
+          <div className="bg-white rounded-xl md:rounded-2xl shadow-sm border border-zinc-200 overflow-hidden mb-6 md:mb-8">
+            <div className="px-4 md:px-6 py-4 border-b border-zinc-100">
+              <h2 className="text-base md:text-lg font-semibold text-zinc-900">
+                Sales by Bedroom Type
+              </h2>
+              <p className="text-xs text-zinc-500 mt-1">
+                Breakdown of transactions and median prices by configuration
+              </p>
+            </div>
+
+            {/* Mobile cards */}
+            <div className="md:hidden divide-y divide-zinc-100">
+              {bedrooms.map((row) => {
+                const pct = Math.round((row.transaction_count / bedroomTotal) * 100);
+                return (
+                  <div key={row.rooms} className="p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="font-semibold text-zinc-900 text-sm">
+                        {row.rooms}
+                      </span>
+                      <span className="text-xs font-medium text-zinc-500">
+                        {pct}% of sales
+                      </span>
+                    </div>
+                    <div className="h-1.5 bg-zinc-100 rounded-full mb-3 overflow-hidden">
+                      <div
+                        className="h-full bg-blue-500 rounded-full"
+                        style={{ width: `${pct}%` }}
+                      ></div>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2">
+                      <div>
+                        <div className="text-[10px] uppercase text-zinc-400">Sales</div>
+                        <div className="text-xs font-medium text-zinc-700">
+                          {row.transaction_count.toLocaleString()}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-[10px] uppercase text-zinc-400">Median</div>
+                        <div className="text-xs font-semibold text-zinc-900">
+                          {formatCompact(row.median_price_aed)}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-[10px] uppercase text-zinc-400">AED/sqft</div>
+                        <div className="text-xs font-medium text-zinc-700">
+                          {formatAED(row.median_aed_sqft)}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Desktop table */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-zinc-50 border-b border-zinc-200">
+                  <tr>
+                    <th className="text-left px-6 py-3 text-xs font-semibold text-zinc-600 uppercase">
+                      Configuration
+                    </th>
+                    <th className="text-right px-6 py-3 text-xs font-semibold text-zinc-600 uppercase">
+                      Transactions
+                    </th>
+                    <th className="text-right px-6 py-3 text-xs font-semibold text-zinc-600 uppercase">
+                      % of Sales
+                    </th>
+                    <th className="text-right px-6 py-3 text-xs font-semibold text-zinc-600 uppercase">
+                      Median Price
+                    </th>
+                    <th className="text-right px-6 py-3 text-xs font-semibold text-zinc-600 uppercase">
+                      AED / sqft
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-zinc-100">
+                  {bedrooms.map((row) => {
+                    const pct = Math.round((row.transaction_count / bedroomTotal) * 100);
+                    return (
+                      <tr key={row.rooms} className="hover:bg-zinc-50">
+                        <td className="px-6 py-4 font-medium text-zinc-900">
+                          {row.rooms}
+                        </td>
+                        <td className="px-6 py-4 text-right text-sm text-zinc-700">
+                          {row.transaction_count.toLocaleString()}
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <div className="flex items-center justify-end gap-3">
+                            <div className="w-24 h-1.5 bg-zinc-100 rounded-full overflow-hidden">
+                              <div
+                                className="h-full bg-blue-500 rounded-full"
+                                style={{ width: `${pct}%` }}
+                              ></div>
+                            </div>
+                            <span className="text-xs text-zinc-600 w-10 text-right">
+                              {pct}%
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 text-right font-semibold text-zinc-900">
+                          AED {formatCompact(row.median_price_aed)}
+                        </td>
+                        <td className="px-6 py-4 text-right text-sm text-zinc-700">
+                          {formatAED(row.median_aed_sqft)}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* ============================================ */}
+        {/* Off-Plan vs Ready Split                      */}
+        {/* ============================================ */}
+        {offplan.length >= 2 && (
+          <div className="bg-white rounded-xl md:rounded-2xl shadow-sm border border-zinc-200 p-5 md:p-8 mb-6 md:mb-8">
+            <h2 className="text-base md:text-lg font-semibold text-zinc-900 mb-1">
+              Off-Plan vs Ready Properties
+            </h2>
+            <p className="text-xs text-zinc-500 mb-6">
+              Market split by delivery status
+            </p>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {offplan.map((row) => {
+                const pct = Math.round((row.transaction_count / offplanTotal) * 100);
+                const isOffplan = row.is_offplan === "Off-Plan";
+                return (
+                  <div
+                    key={row.is_offplan}
+                    className={`rounded-xl p-5 border ${
+                      isOffplan
+                        ? "bg-amber-50 border-amber-200"
+                        : "bg-emerald-50 border-emerald-200"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-3">
+                      <span
+                        className={`text-sm font-semibold ${
+                          isOffplan ? "text-amber-900" : "text-emerald-900"
+                        }`}
+                      >
+                        {row.is_offplan}
+                      </span>
+                      <span
+                        className={`text-lg font-bold ${
+                          isOffplan ? "text-amber-700" : "text-emerald-700"
+                        }`}
+                      >
+                        {pct}%
+                      </span>
+                    </div>
+                    <div className="space-y-1.5 text-xs">
+                      <div className="flex justify-between">
+                        <span className="text-zinc-600">Transactions</span>
+                        <span className="font-medium text-zinc-900">
+                          {row.transaction_count.toLocaleString()}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-zinc-600">Median price</span>
+                        <span className="font-medium text-zinc-900">
+                          AED {formatCompact(row.median_price_aed)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-zinc-600">Median AED/sqft</span>
+                        <span className="font-medium text-zinc-900">
+                          {formatAED(row.median_aed_sqft)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="mt-4 text-[11px] md:text-xs text-zinc-500 leading-relaxed">
+              <strong>Note:</strong> Off-plan properties are sold before
+              completion and often have different price dynamics than ready
+              properties. Compare them carefully.
+            </div>
+          </div>
+        )}
+
+        {/* ============================================ */}
+        {/* All Property Types                           */}
+        {/* ============================================ */}
         <div className="bg-white rounded-xl md:rounded-2xl shadow-sm border border-zinc-200 overflow-hidden mb-6 md:mb-8">
           <div className="px-4 md:px-6 py-4 border-b border-zinc-100">
             <h2 className="text-base md:text-lg font-semibold text-zinc-900">
@@ -179,7 +467,7 @@ export default async function AreaDetailPage({ params }: PageProps) {
 
           {/* Mobile cards */}
           <div className="md:hidden divide-y divide-zinc-100">
-            {detail.data.map((row) => (
+            {detail.data.map((row: any) => (
               <div key={row.property_type} className="p-4">
                 <div className="flex items-center justify-between mb-3">
                   <span className="font-semibold text-zinc-900 text-sm">
@@ -234,7 +522,7 @@ export default async function AreaDetailPage({ params }: PageProps) {
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-100">
-                {detail.data.map((row) => (
+                {detail.data.map((row: any) => (
                   <tr key={row.property_type} className="hover:bg-zinc-50">
                     <td className="px-6 py-4 font-medium text-zinc-900">{row.property_type}</td>
                     <td className="px-6 py-4 text-right text-sm text-zinc-700">
@@ -266,13 +554,134 @@ export default async function AreaDetailPage({ params }: PageProps) {
           </div>
         </div>
 
-        {/* CTA */}
+        {/* ============================================ */}
+        {/* FAQ Section — GEO optimized                  */}
+        {/* ============================================ */}
+        {primary && (
+          <div className="bg-white rounded-xl md:rounded-2xl shadow-sm border border-zinc-200 p-5 md:p-8 mb-6 md:mb-8">
+            <h2 className="text-base md:text-lg font-semibold text-zinc-900 mb-6">
+              Frequently Asked Questions
+            </h2>
+
+            <div className="space-y-6">
+              <div>
+                <h3 className="font-semibold text-zinc-900 text-sm md:text-base mb-2">
+                  What is the median property price in {nameInfo.primary}?
+                </h3>
+                <p className="text-sm text-zinc-600 leading-relaxed">
+                  The median sale price in {nameInfo.primary} was AED{" "}
+                  {formatAED(primary.median_price_aed)} based on{" "}
+                  {primary.transaction_count.toLocaleString()} registered sales
+                  from {primary.first_transaction} to {primary.last_transaction}.
+                </p>
+              </div>
+
+              <div>
+                <h3 className="font-semibold text-zinc-900 text-sm md:text-base mb-2">
+                  What is the price per square foot in {nameInfo.primary}?
+                </h3>
+                <p className="text-sm text-zinc-600 leading-relaxed">
+                  The median price per square foot in {nameInfo.primary} is AED{" "}
+                  {formatAED(primary.median_aed_sqft)} based on registered DLD
+                  transactions.
+                </p>
+              </div>
+
+              {topBedroom && (
+                <div>
+                  <h3 className="font-semibold text-zinc-900 text-sm md:text-base mb-2">
+                    What is the most common property type in {nameInfo.primary}?
+                  </h3>
+                  <p className="text-sm text-zinc-600 leading-relaxed">
+                    The most active configuration in {nameInfo.primary} is{" "}
+                    {topBedroom.rooms}, accounting for{" "}
+                    {Math.round((topBedroom.transaction_count / bedroomTotal) * 100)}
+                    % of transactions. The median price for {topBedroom.rooms} is
+                    AED {formatAED(topBedroom.median_price_aed)}.
+                  </p>
+                </div>
+              )}
+
+              {offplan.length >= 2 && (
+                <div>
+                  <h3 className="font-semibold text-zinc-900 text-sm md:text-base mb-2">
+                    Is {nameInfo.primary} mostly off-plan or ready properties?
+                  </h3>
+                  <p className="text-sm text-zinc-600 leading-relaxed">
+                    {offplanPct}% of transactions in {nameInfo.primary} are
+                    off-plan properties, while {100 - offplanPct}% are ready
+                    properties.
+                  </p>
+                </div>
+              )}
+
+              <div>
+                <h3 className="font-semibold text-zinc-900 text-sm md:text-base mb-2">
+                  How many properties sold in {nameInfo.primary} in 2026?
+                </h3>
+                <p className="text-sm text-zinc-600 leading-relaxed">
+                  {primary.transaction_count.toLocaleString()} properties sold
+                  in {nameInfo.primary} between {primary.first_transaction} and{" "}
+                  {primary.last_transaction}, according to Dubai Land Department
+                  data.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ============================================ */}
+        {/* Related Areas                                */}
+        {/* ============================================ */}
+        {related.length > 0 && (
+          <div className="bg-white rounded-xl md:rounded-2xl shadow-sm border border-zinc-200 p-5 md:p-8 mb-6 md:mb-8">
+            <h2 className="text-base md:text-lg font-semibold text-zinc-900 mb-1">
+              Similar Areas
+            </h2>
+            <p className="text-xs text-zinc-500 mb-6">
+              Areas with similar median prices to {nameInfo.primary}
+            </p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {related.map((row) => (
+                <Link
+                  key={row.area_name}
+                  href={`/areas/${slugify(row.area_name)}`}
+                  className="group flex items-center justify-between p-4 rounded-xl border border-zinc-200 hover:border-blue-300 hover:bg-blue-50/30 transition"
+                >
+                  <div>
+                    <div className="font-medium text-zinc-900 text-sm group-hover:text-blue-700 transition">
+                      {displayName(row.area_name)}
+                    </div>
+                    <div className="text-xs text-zinc-500 mt-0.5">
+                      {row.transaction_count.toLocaleString()} sales
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-sm font-semibold text-zinc-900">
+                      AED {formatCompact(row.median_price_aed)}
+                    </div>
+                    <div className="text-[10px] text-zinc-400 group-hover:text-blue-500">
+                      View →
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ============================================ */}
+        {/* CTA                                          */}
+        {/* ============================================ */}
         <div className="bg-blue-50 border border-blue-200 rounded-xl md:rounded-2xl p-6 md:p-8 text-center">
           <h3 className="text-base md:text-lg font-semibold text-zinc-900 mb-2">
-            Got a specific property in {displayName}?
+            Got a specific property in {nameInfo.primary}?
           </h3>
           <p className="text-zinc-600 mb-5 text-xs md:text-sm">
-            Enter the asking price and compare it against {primary ? primary.transaction_count.toLocaleString() : "our"} comparable transactions.
+            Enter the asking price and compare it against{" "}
+            {primary ? primary.transaction_count.toLocaleString() : "our"}{" "}
+            comparable transactions.
           </p>
           <Link
             href="/"
@@ -283,7 +692,8 @@ export default async function AreaDetailPage({ params }: PageProps) {
         </div>
 
         <div className="mt-6 md:mt-8 text-[11px] md:text-xs text-zinc-500 text-center">
-          Source: {detail.source.name} - {detail.source.dataset} dataset. Sales only. Not investment advice.
+          Source: {detail.source.name} - {detail.source.dataset} dataset. Sales
+          only. Not investment advice.
         </div>
       </main>
 
