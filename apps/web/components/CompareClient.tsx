@@ -32,22 +32,36 @@ function displayName(name: string): string {
   return name.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
-const DEFAULT_AREAS = ["Dubai Marina", "Jumeirah Village Circle", "Business Bay"];
-
 type ChartTab = "price" | "sqft" | "trend";
 
-export default function CompareClient() {
-  const [selected, setSelected] = useState<string[]>(DEFAULT_AREAS);
+interface Props {
+  initialAreas: string[];
+  initialResult: CompareAreaRow[];
+  initialMonthly: CompareMonthlyRow[];
+}
+
+export default function CompareClient({
+  initialAreas,
+  initialResult,
+  initialMonthly,
+}: Props) {
+  const [selected, setSelected] = useState<string[]>(initialAreas);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<AreaSearchRow[]>([]);
-  const [result, setResult] = useState<CompareAreaRow[] | null>(null);
-  const [monthly, setMonthly] = useState<CompareMonthlyRow[]>([]);
+  const [result, setResult] = useState<CompareAreaRow[] | null>(initialResult);
+  const [monthly, setMonthly] = useState<CompareMonthlyRow[]>(initialMonthly);
   const [missing, setMissing] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [mobileTab, setMobileTab] = useState<ChartTab>("price");
+  const [isFirstRender, setIsFirstRender] = useState(true);
 
   useEffect(() => {
+    if (isFirstRender) {
+      setIsFirstRender(false);
+      return;
+    }
+
     if (selected.length < 2) {
       setResult(null);
       setMonthly([]);
@@ -64,7 +78,7 @@ export default function CompareClient() {
       })
       .catch((e) => setError(e instanceof Error ? e.message : "Failed"))
       .finally(() => setLoading(false));
-  }, [selected]);
+  }, [selected, isFirstRender]);
 
   useEffect(() => {
     if (searchQuery.length < 2) {
@@ -174,7 +188,6 @@ export default function CompareClient() {
 
       {result && !loading && result.length >= 2 && (
         <>
-          {/* Mobile: Tabbed charts */}
           <div className="lg:hidden mb-4">
             <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden">
               <div className="flex border-b border-zinc-100">
@@ -208,7 +221,6 @@ export default function CompareClient() {
             </div>
           </div>
 
-          {/* Desktop: All 3 charts stacked */}
           <div className="hidden lg:block">
             <div className="bg-white rounded-2xl border border-zinc-200 p-8 mb-6">
               <h2 className="text-base font-semibold text-zinc-900 mb-6">
@@ -239,7 +251,6 @@ export default function CompareClient() {
             )}
           </div>
 
-          {/* Side-by-side — Mobile cards + Desktop table */}
           <div className="bg-white rounded-xl md:rounded-2xl border border-zinc-200 overflow-hidden mb-6">
             <div className="px-4 md:px-6 py-4 border-b border-zinc-100">
               <h2 className="text-base md:text-lg font-semibold text-zinc-900">
@@ -247,7 +258,6 @@ export default function CompareClient() {
               </h2>
             </div>
 
-            {/* Mobile cards */}
             <div className="lg:hidden divide-y divide-zinc-100">
               {result.map((r) => {
                 const slug = r.area_name.toLowerCase().trim().replace(/\s+/g, "-");
@@ -302,7 +312,8 @@ export default function CompareClient() {
                           P25-P75
                         </div>
                         <div className="text-xs text-zinc-600">
-                          {formatCompact(r.p25_price_aed)}–{formatCompact(r.p75_price_aed)}
+                          {formatCompact(r.p25_price_aed)}–
+                          {formatCompact(r.p75_price_aed)}
                         </div>
                       </div>
                     </div>
@@ -311,7 +322,6 @@ export default function CompareClient() {
               })}
             </div>
 
-            {/* Desktop table */}
             <div className="hidden lg:block overflow-x-auto">
               <table className="w-full">
                 <thead className="bg-zinc-50 border-b border-zinc-200">
