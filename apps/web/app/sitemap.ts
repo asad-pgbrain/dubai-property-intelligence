@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = "https://dubaipropertyintel.com";
+  const baseUrl = "https://dubai-property-intelligence-apps.vercel.app";
 
   return [
     {
@@ -11,10 +11,10 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 1,
     },
     {
-      url: `${baseUrl}/methodology`,
+      url: `${baseUrl}/market`,
       lastModified: new Date(),
-      changeFrequency: "monthly",
-      priority: 0.8,
+      changeFrequency: "daily",
+      priority: 0.9,
     },
     {
       url: `${baseUrl}/areas`,
@@ -23,10 +23,40 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.9,
     },
     {
-      url: `${baseUrl}/market`,
+      url: `${baseUrl}/compare`,
       lastModified: new Date(),
-      changeFrequency: "daily",
-      priority: 0.9,
+      changeFrequency: "weekly",
+      priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/methodology`,
+      lastModified: new Date(),
+      changeFrequency: "monthly",
+      priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/about`,
+      lastModified: new Date(),
+      changeFrequency: "monthly",
+      priority: 0.7,
+    },
+    {
+      url: `${baseUrl}/how-we-make-money`,
+      lastModified: new Date(),
+      changeFrequency: "monthly",
+      priority: 0.7,
+    },
+    {
+      url: `${baseUrl}/privacy`,
+      lastModified: new Date(),
+      changeFrequency: "yearly",
+      priority: 0.3,
+    },
+    {
+      url: `${baseUrl}/terms`,
+      lastModified: new Date(),
+      changeFrequency: "yearly",
+      priority: 0.3,
     },
   ];
 }
