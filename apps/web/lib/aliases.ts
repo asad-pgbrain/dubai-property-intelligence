@@ -17,7 +17,7 @@ export const AREA_ALIASES: Record<string, string[]> = {
   "DUBAI SPORTS CITY": ["sports city", "dsc"],
   "DUBAI INTERNET CITY": ["internet city", "dic"],
   "DUBAI MEDIA CITY": ["media city", "dmc"],
-  "DUBAI MARINA": ["marina", "dubai marina"],
+  "MARSA DUBAI": ["dubai marina", "marina", "marsa dubai", "dubai marina mall area"],
   "PALM JUMEIRAH": ["palm", "the palm", "palm islands"],
   "BUSINESS BAY": ["business bay"],
   "JUMEIRAH VILLAGE CIRCLE": ["jvc", "village circle"],
