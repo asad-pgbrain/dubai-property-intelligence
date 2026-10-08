@@ -1,4 +1,47 @@
 import { sql } from "./db";
+import { findAreasByAlias } from "./aliases";
+
+export async function searchAreas(q: string, limit = 20) {
+  if (!q || q.length < 2) {
+    // Return top areas if no query
+    const rows = (await sql`
+      SELECT DISTINCT
+        area_name,
+        SUM(transaction_count)::int AS total_transactions
+      FROM analytics.area_market_summary
+      WHERE property_type = 'Unit'
+      GROUP BY area_name
+      HAVING SUM(transaction_count) >= 20
+      ORDER BY total_transactions DESC
+      LIMIT ${limit}
+    `) as SearchRow[];
+    return { data: rows, count: rows.length };
+  }
+
+  // Get matching DLD names via alias
+  const aliasMatches = findAreasByAlias(q);
+
+  // Search both direct name match AND alias matches
+  const pattern = `%${q.toUpperCase()}%`;
+  const rows = (await sql`
+    SELECT DISTINCT
+      area_name,
+      SUM(transaction_count)::int AS total_transactions
+    FROM analytics.area_market_summary
+    WHERE property_type = 'Unit'
+      AND (
+        UPPER(area_name) LIKE ${pattern}
+        OR UPPER(area_name) = ANY(${aliasMatches.length > 0 ? aliasMatches : ['__no_match__']})
+      )
+    GROUP BY area_name
+    HAVING SUM(transaction_count) >= 5
+    ORDER BY total_transactions DESC
+    LIMIT ${limit}
+  `) as SearchRow[];
+
+  return { data: rows, count: rows.length };
+}
+
 
 // ============================================================
 // Types
@@ -243,24 +286,6 @@ export async function getAreaMonthly(areaName: string) {
 // ============================================================
 // Search Areas
 // ============================================================
-export async function searchAreas(q: string, limit = 20) {
-  const pattern = `%${q}%`;
-  const rows = (await sql`
-    SELECT DISTINCT
-      area_name,
-      SUM(transaction_count)::int AS total_transactions
-    FROM analytics.area_market_summary
-    WHERE property_type = 'Unit'
-      AND (${q} = '' OR UPPER(area_name) LIKE UPPER(${pattern}))
-    GROUP BY area_name
-    HAVING SUM(transaction_count) >= 20
-    ORDER BY total_transactions DESC
-    LIMIT ${limit}
-  `) as SearchRow[];
-
-  return { data: rows, count: rows.length };
-}
-
 // ============================================================
 // Compare Areas
 // ============================================================

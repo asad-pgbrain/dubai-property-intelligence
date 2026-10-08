@@ -1,3 +1,4 @@
+import { getDisplayNameWithAlias } from "@/lib/aliases";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -40,6 +41,7 @@ export default async function AreaDetailPage({ params }: PageProps) {
   const { slug } = await params;
   const areaName = slugToAreaName(slug);
   const displayName = slug.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+  const nameInfo = getDisplayNameWithAlias(areaName);    // ← YE NAYI LINE
 
   let detail;
   let monthly: any[] = [];
@@ -74,11 +76,16 @@ export default async function AreaDetailPage({ params }: PageProps) {
 
         <div className="mb-6 md:mb-10">
           <h1 className="text-2xl md:text-4xl font-bold text-zinc-900 mb-2 md:mb-3 tracking-tight">
-            {displayName} Property Prices
-          </h1>
-          <p className="text-sm md:text-base text-zinc-600 max-w-3xl">
-            Registered transaction data for {displayName} from the Dubai Land Department.
-          </p>
+  {nameInfo.primary} Property Prices
+</h1>
+{nameInfo.alias && (
+  <p className="text-xs md:text-sm text-zinc-500 mb-2">
+    Also known as {nameInfo.alias} (DLD name)
+  </p>
+)}
+<p className="text-sm md:text-base text-zinc-600 max-w-3xl">
+  Registered transaction data for {nameInfo.primary} from the Dubai Land Department.
+</p>
         </div>
 
         {/* Market Summary */}
