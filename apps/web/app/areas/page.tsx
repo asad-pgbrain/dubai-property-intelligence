@@ -7,7 +7,14 @@ import { listAreas } from "@/lib/queries";
 export const metadata: Metadata = {
   title: "Dubai Areas - Property Prices & Market Data",
   description:
-    "Browse all Dubai areas with real transaction data. Median prices, AED/sqft, transaction counts from the Dubai Land Department.",
+    "Browse 246 Dubai areas with median property prices, AED/sqft, and transaction data from the Dubai Land Department. Free market research.",
+  openGraph: {
+    type: "website",
+    url: "https://dubai-property-intelligence-apps.vercel.app/areas",
+    title: "Dubai Areas — Property Prices & Market Data | DPI",
+    description:
+      "Median prices for 246 Dubai areas from 124,395 registered DLD sales.",
+  },
 };
 
 function slugify(name: string): string {

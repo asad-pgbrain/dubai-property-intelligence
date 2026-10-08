@@ -7,7 +7,14 @@ import { getMarketOverview } from "@/lib/queries";
 export const metadata: Metadata = {
   title: "Dubai Property Market Overview 2026",
   description:
-    "Dubai real estate market overview: total transactions, median prices, monthly trends, and top areas. Based on official Dubai Land Department data.",
+    "Dubai real estate market overview: total transactions, median prices, monthly trends, and top areas. Based on 124,395 registered DLD sales.",
+  openGraph: {
+    type: "website",
+    url: "https://dubai-property-intelligence-apps.vercel.app/market",
+    title: "Dubai Property Market Overview 2026 | DPI",
+    description:
+      "124,395 registered sales, AED 382B volume, 246 areas. Real DLD data.",
+  },
 };
 
 function formatCompact(value: number | null | undefined): string {

@@ -6,6 +6,17 @@ export const metadata: Metadata = {
   title: "Terms of Service",
   description:
     "Terms and conditions for using Dubai Property Intelligence.",
+  openGraph: {
+    type: "website",
+    url: "https://dubai-property-intelligence-apps.vercel.app/terms",
+    title: "Terms of Service | Dubai Property Intelligence",
+    description:
+      "Terms and conditions for using our free Dubai property research platform.",
+  },
+  robots: {
+    index: false,
+    follow: true,
+  },
 };
 
 export default function TermsPage() {

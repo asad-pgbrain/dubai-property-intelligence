@@ -6,7 +6,14 @@ import Footer from "@/components/Footer";
 export const metadata: Metadata = {
   title: "How We Make Money",
   description:
-    "How Dubai Property Intelligence plans to be sustainable without compromising trust.",
+    "How Dubai Property Intelligence plans to be sustainable without compromising trust. Our commitment to neutrality and no broker money.",
+  openGraph: {
+    type: "website",
+    url: "https://dubai-property-intelligence-apps.vercel.app/how-we-make-money",
+    title: "How We Make Money | Dubai Property Intelligence",
+    description:
+      "Our commitment to neutrality — no broker money, no data selling, no compromise.",
+  },
 };
 
 export default function HowWeMakeMoneyPage() {

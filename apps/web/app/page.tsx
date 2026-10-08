@@ -4,6 +4,20 @@ import RealityCheckForm from "@/components/RealityCheckForm";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { listAreas } from "@/lib/queries";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Dubai Property Intelligence — Market Data & Reality Check",
+  description:
+    "Check any Dubai property against real market data from the Dubai Land Department. 124,395 registered sales across 246 areas. Free, no ads, no broker money.",
+  openGraph: {
+    type: "website",
+    url: "https://dubai-property-intelligence-apps.vercel.app",
+    title: "Dubai Property Intelligence — Market Data & Reality Check",
+    description:
+      "Check any Dubai property against real market data from DLD. 124,395 registered sales.",
+  },
+};
 
 function slugify(name: string): string {
   return name.toLowerCase().trim().replace(/\s+/g, "-");

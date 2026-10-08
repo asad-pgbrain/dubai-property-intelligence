@@ -22,9 +22,17 @@ function formatAED(value: number | null): string {
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
   const displayName = slug.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+  const url = `https://dubai-property-intelligence-apps.vercel.app/areas/${slug}`;
+
   return {
     title: `${displayName} Property Prices & Market Data`,
     description: `Median property prices, AED/sqft, and transaction data for ${displayName}, Dubai. Based on official Dubai Land Department transactions.`,
+    openGraph: {
+      type: "article",
+      url,
+      title: `${displayName} Property Prices | DPI`,
+      description: `Market data for ${displayName} — median prices, AED/sqft, and transaction trends from DLD.`,
+    },
   };
 }
 

@@ -5,7 +5,14 @@ import CompareClient from "@/components/CompareClient";
 export const metadata: Metadata = {
   title: "Compare Dubai Areas - Prices, Trends & Activity",
   description:
-    "Compare Dubai areas side by side: median prices, AED/sqft, and transaction activity from Dubai Land Department data.",
+    "Compare up to 6 Dubai areas side by side: median prices, AED/sqft, transaction activity, and monthly trends from DLD data.",
+  openGraph: {
+    type: "website",
+    url: "https://dubai-property-intelligence-apps.vercel.app/compare",
+    title: "Compare Dubai Areas — Prices & Trends | DPI",
+    description:
+      "Side-by-side comparison of Dubai areas from official DLD transaction data.",
+  },
 };
 
 export default function ComparePage() {

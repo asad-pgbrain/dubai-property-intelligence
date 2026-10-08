@@ -6,6 +6,17 @@ export const metadata: Metadata = {
   title: "Privacy Policy",
   description:
     "How Dubai Property Intelligence collects, uses, and protects your information.",
+  openGraph: {
+    type: "website",
+    url: "https://dubai-property-intelligence-apps.vercel.app/privacy",
+    title: "Privacy Policy | Dubai Property Intelligence",
+    description:
+      "How we handle your data — minimal collection, no selling, GDPR-compliant.",
+  },
+  robots: {
+    index: false,
+    follow: true,
+  },
 };
 
 export default function PrivacyPage() {

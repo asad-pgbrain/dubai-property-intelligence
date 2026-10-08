@@ -8,6 +8,13 @@ export const metadata: Metadata = {
   title: "About",
   description:
     "Dubai Property Intelligence is a free, data-first research platform built on official Dubai Land Department transaction data.",
+  openGraph: {
+    type: "website",
+    url: "https://dubai-property-intelligence-apps.vercel.app/about",
+    title: "About | Dubai Property Intelligence",
+    description:
+      "Why we built a free, data-first Dubai property research platform using official DLD data.",
+  },
 };
 
 export default function AboutPage() {

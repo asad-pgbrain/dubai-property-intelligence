@@ -6,7 +6,14 @@ import Header from "@/components/Header";
 export const metadata: Metadata = {
   title: "Data Methodology",
   description:
-    "How Dubai Property Intelligence sources, processes, and presents real estate market data from the Dubai Land Department.",
+    "How Dubai Property Intelligence sources, processes, and presents DLD real estate data. Every number traced to source, period, and sample size.",
+  openGraph: {
+    type: "website",
+    url: "https://dubai-property-intelligence-apps.vercel.app/methodology",
+    title: "Data Methodology | Dubai Property Intelligence",
+    description:
+      "Full transparency on how we source, calculate, and present DLD market data.",
+  },
 };
 
 export default function MethodologyPage() {
