@@ -195,7 +195,7 @@ export default async function Q3ReportPage() {
                   Monthly Sales Trend
                 </h2>
                 <div className="bg-white rounded-2xl border border-zinc-200 p-6">
-                  <RentsChart data={data.monthly_trend as any} />
+                  <RentsChart data={data.monthly_trend} variant="sales" />
                 </div>
                 <p className="text-xs text-zinc-500 mt-3">
                   Bars show contract count, green line shows total volume (AED

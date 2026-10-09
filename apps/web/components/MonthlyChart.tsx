@@ -43,8 +43,8 @@ export default function MonthlyChart({ data }: Props) {
   }));
 
   return (
-    <div className="w-full h-64 md:h-80">
-      <ResponsiveContainer width="100%" height="100%">
+    <div className="w-full" style={{ height: 320 }}>
+      <ResponsiveContainer width="99%" height={320}>
         <ComposedChart
           data={chartData}
           margin={{ top: 10, right: 5, left: -15, bottom: 0 }}

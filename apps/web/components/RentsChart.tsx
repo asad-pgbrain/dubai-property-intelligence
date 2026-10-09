@@ -14,13 +14,19 @@ import {
 
 interface TrendRow {
   month: string;
-  rent_count: number;
-  total_annual_value: number;
-  median_annual_rent: number;
+  // Sales keys
+  sale_count?: number;
+  volume_aed?: number;
+  // Rent keys
+  rent_count?: number;
+  total_annual_value?: number;
+  median_annual_rent?: number;
+  median_price_aed?: number;
 }
 
 interface Props {
   data: TrendRow[];
+  variant?: "sales" | "rents";
 }
 
 function formatMonth(month: string): string {
@@ -35,16 +41,25 @@ function formatCompact(value: number): string {
   return String(value);
 }
 
-export default function RentsChart({ data }: Props) {
+export default function RentsChart({ data, variant = "rents" }: Props) {
+  const isSales = variant === "sales";
+
   const chartData = data.map((d) => ({
     month: formatMonth(d.month),
-    rents: d.rent_count,
-    value: Math.round(Number(d.total_annual_value) / 1_000_000),
+    primary: isSales ? (d.sale_count ?? 0) : (d.rent_count ?? 0),
+    value: Math.round(
+      Number(isSales ? (d.volume_aed ?? 0) : (d.total_annual_value ?? 0)) /
+        1_000_000
+    ),
   }));
 
+  const primaryLabel = isSales ? "Transactions" : "Contracts";
+  const primaryName = isSales ? "Sales" : "Contracts";
+  const barColor = isSales ? "#3b82f6" : "#8b5cf6";
+
   return (
-    <div className="w-full h-64 md:h-80">
-      <ResponsiveContainer width="100%" height="100%">
+    <div className="w-full" style={{ height: 320 }}>
+      <ResponsiveContainer width="99%" height={320}>
         <ComposedChart
           data={chartData}
           margin={{ top: 10, right: 5, left: -15, bottom: 0 }}
@@ -95,9 +110,9 @@ export default function RentsChart({ data }: Props) {
           />
           <Bar
             yAxisId="left"
-            dataKey="rents"
-            name="Contracts"
-            fill="#8b5cf6"
+            dataKey="primary"
+            name={primaryName}
+            fill={barColor}
             radius={[4, 4, 0, 0]}
             maxBarSize={40}
           />
