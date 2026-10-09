@@ -124,7 +124,9 @@ export default function CompareClient({
               key={area}
               className="inline-flex items-center gap-1.5 bg-blue-50 text-blue-800 text-xs md:text-sm px-2.5 md:px-3 py-1.5 rounded-lg border border-blue-200"
             >
-              <span className="max-w-[120px] md:max-w-none truncate">{area}</span>
+              <span className="max-w-[120px] md:max-w-none truncate">
+                {area}
+              </span>
               <button
                 onClick={() => removeArea(area)}
                 className="hover:bg-blue-100 rounded-full w-4 h-4 flex items-center justify-center text-xs flex-shrink-0"
@@ -188,6 +190,7 @@ export default function CompareClient({
 
       {result && !loading && result.length >= 2 && (
         <>
+          {/* Mobile: Tabbed charts */}
           <div className="lg:hidden mb-4">
             <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden">
               <div className="flex border-b border-zinc-100">
@@ -221,6 +224,7 @@ export default function CompareClient({
             </div>
           </div>
 
+          {/* Desktop: All 3 charts stacked */}
           <div className="hidden lg:block">
             <div className="bg-white rounded-2xl border border-zinc-200 p-8 mb-6">
               <h2 className="text-base font-semibold text-zinc-900 mb-6">
@@ -251,6 +255,7 @@ export default function CompareClient({
             )}
           </div>
 
+          {/* Side-by-side — Mobile cards + Desktop table */}
           <div className="bg-white rounded-xl md:rounded-2xl border border-zinc-200 overflow-hidden mb-6">
             <div className="px-4 md:px-6 py-4 border-b border-zinc-100">
               <h2 className="text-base md:text-lg font-semibold text-zinc-900">
@@ -258,9 +263,13 @@ export default function CompareClient({
               </h2>
             </div>
 
+            {/* Mobile cards */}
             <div className="lg:hidden divide-y divide-zinc-100">
               {result.map((r) => {
-                const slug = r.area_name.toLowerCase().trim().replace(/\s+/g, "-");
+                const slug = r.area_name
+                  .toLowerCase()
+                  .trim()
+                  .replace(/\s+/g, "-");
                 return (
                   <div key={r.area_name} className="p-4">
                     <div className="flex items-center justify-between mb-3">
@@ -316,12 +325,33 @@ export default function CompareClient({
                           {formatCompact(r.p75_price_aed)}
                         </div>
                       </div>
+                      <div>
+                        <div className="text-[10px] uppercase text-zinc-400">
+                          Median Rent
+                        </div>
+                        <div className="text-xs font-medium text-zinc-700">
+                          {r.median_annual_rent
+                            ? `AED ${formatCompact(r.median_annual_rent)}`
+                            : "—"}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-[10px] uppercase text-zinc-400">
+                          Gross Yield
+                        </div>
+                        <div className="text-xs font-semibold text-emerald-600">
+                          {r.gross_yield_pct != null
+                            ? `${r.gross_yield_pct}%`
+                            : "—"}
+                        </div>
+                      </div>
                     </div>
                   </div>
                 );
               })}
             </div>
 
+            {/* Desktop table */}
             <div className="hidden lg:block overflow-x-auto">
               <table className="w-full">
                 <thead className="bg-zinc-50 border-b border-zinc-200">
@@ -358,7 +388,10 @@ export default function CompareClient({
                       AED / sqft
                     </td>
                     {result.map((r) => (
-                      <td key={r.area_name} className="px-6 py-3 text-right text-zinc-900">
+                      <td
+                        key={r.area_name}
+                        className="px-6 py-3 text-right text-zinc-900"
+                      >
                         {formatAED(r.median_aed_sqft)}
                       </td>
                     ))}
@@ -368,7 +401,10 @@ export default function CompareClient({
                       Transactions
                     </td>
                     {result.map((r) => (
-                      <td key={r.area_name} className="px-6 py-3 text-right text-zinc-700">
+                      <td
+                        key={r.area_name}
+                        className="px-6 py-3 text-right text-zinc-700"
+                      >
                         {r.transaction_count.toLocaleString()}
                       </td>
                     ))}
@@ -382,7 +418,39 @@ export default function CompareClient({
                         key={r.area_name}
                         className="px-6 py-3 text-right text-sm text-zinc-700"
                       >
-                        {formatCompact(r.p25_price_aed)} – {formatCompact(r.p75_price_aed)}
+                        {formatCompact(r.p25_price_aed)} –{" "}
+                        {formatCompact(r.p75_price_aed)}
+                      </td>
+                    ))}
+                  </tr>
+                  <tr className="bg-emerald-50/30">
+                    <td className="px-6 py-3 text-sm font-medium text-zinc-700">
+                      Median Annual Rent
+                    </td>
+                    {result.map((r) => (
+                      <td
+                        key={r.area_name}
+                        className="px-6 py-3 text-right text-sm text-zinc-700"
+                      >
+                        {r.median_annual_rent
+                          ? `AED ${formatCompact(r.median_annual_rent)}`
+                          : "—"}
+                      </td>
+                    ))}
+                  </tr>
+                  <tr className="bg-emerald-50/30">
+                    <td className="px-6 py-3 text-sm font-medium text-zinc-700">
+                      Gross Rental Yield
+                    </td>
+                    {result.map((r) => (
+                      <td key={r.area_name} className="px-6 py-3 text-right">
+                        {r.gross_yield_pct != null ? (
+                          <span className="font-semibold text-emerald-600">
+                            {r.gross_yield_pct}%
+                          </span>
+                        ) : (
+                          <span className="text-zinc-400">—</span>
+                        )}
                       </td>
                     ))}
                   </tr>
@@ -411,7 +479,10 @@ export default function CompareClient({
                       Details
                     </td>
                     {result.map((r) => {
-                      const slug = r.area_name.toLowerCase().trim().replace(/\s+/g, "-");
+                      const slug = r.area_name
+                        .toLowerCase()
+                        .trim()
+                        .replace(/\s+/g, "-");
                       return (
                         <td key={r.area_name} className="px-6 py-3 text-right">
                           <Link
@@ -430,8 +501,9 @@ export default function CompareClient({
           </div>
 
           <div className="text-[11px] md:text-xs text-zinc-500 text-center">
-            Source: Dubai Land Department — Transactions dataset. Sales only.
-            Coverage shown per area. Not investment advice.
+            Source: Dubai Land Department — Transactions + Rents datasets.
+            Sales and residential rents only. Coverage shown per area. Not
+            investment advice.
           </div>
         </>
       )}

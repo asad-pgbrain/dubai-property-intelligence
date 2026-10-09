@@ -171,7 +171,6 @@ export async function getMarketOverview(): Promise<MarketOverviewResponse> {
 // ============================================================
 // Compare
 // ============================================================
-
 export interface CompareAreaRow {
   area_name: string;
   property_type: string;
@@ -183,7 +182,11 @@ export interface CompareAreaRow {
   data_coverage: string;
   first_transaction: string | null;
   last_transaction: string | null;
+  rent_count: number | null;
+  median_annual_rent: number | null;
+  gross_yield_pct: number | null;
 }
+
 
 export interface CompareResponse {
   data: CompareAreaRow[];

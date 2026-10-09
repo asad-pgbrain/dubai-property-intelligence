@@ -199,6 +199,9 @@ interface CompareRow {
   data_coverage: string;
   first_transaction: string;
   last_transaction: string;
+  rent_count: number | null;           // NEW
+  median_annual_rent: number | null;   // NEW
+  gross_yield_pct: number | null;      // NEW 
 }
 
 interface CompareMonthlyRow {
@@ -401,33 +404,41 @@ export async function compareAreas(areas: string[]) {
 
   const rows = (await sql`
     SELECT
-      area_name,
-      property_type,
-      transaction_count,
-      ROUND(median_price)::bigint AS median_price_aed,
-      ROUND(median_price_sqft)::bigint AS median_aed_sqft,
-      ROUND(p25_price)::bigint AS p25_price_aed,
-      ROUND(p75_price)::bigint AS p75_price_aed,
-      data_coverage,
-      first_transaction::text AS first_transaction,
-      last_transaction::text AS last_transaction
-    FROM analytics.area_market_summary
-    WHERE UPPER(TRIM(area_name)) = ANY(${normalized})
-      AND property_type = 'Unit'
-    ORDER BY transaction_count DESC
+      s.area_name,
+      s.property_type,
+      s.transaction_count,
+      ROUND(s.median_price)::bigint AS median_price_aed,
+      ROUND(s.median_price_sqft)::bigint AS median_aed_sqft,
+      ROUND(s.p25_price)::bigint AS p25_price_aed,
+      ROUND(s.p75_price)::bigint AS p75_price_aed,
+      s.data_coverage,
+      s.first_transaction::text AS first_transaction,
+      s.last_transaction::text AS last_transaction,
+      r.rent_count,
+      r.median_annual_rent,
+      r.gross_yield_pct
+    FROM analytics.area_market_summary s
+    LEFT JOIN analytics.area_yield_summary r
+      ON UPPER(TRIM(s.area_name)) = UPPER(TRIM(r.area_name))
+      AND s.property_type = r.property_sub_type
+    WHERE UPPER(TRIM(s.area_name)) = ANY(${normalized})
+      AND s.property_type = 'Unit'
+    ORDER BY s.transaction_count DESC
   `) as CompareRow[];
 
   const found = rows.map((r) => r.area_name);
-  const missing = areas.filter((a) => !found.includes(a.trim().toUpperCase()));
+  const missing = areas.filter(
+    (a) => !found.includes(a.trim().toUpperCase())
+  );
 
   return {
     data: rows,
     missing,
     count: rows.length,
-    source: { name: "Dubai Land Department", dataset: "Transactions" },
+    source: { name: "Dubai Land Department", dataset: "Transactions + Rents" },
   };
 }
-
+   
 // ============================================================
 // Compare Monthly
 // ============================================================
