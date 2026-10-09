@@ -14,7 +14,6 @@ import {
   getAreaRentTrend,
 } from "@/lib/queries";
 import { getDisplayNameWithAlias } from "@/lib/aliases";
-import { DATA_STATS } from "@/lib/constants";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -43,6 +42,15 @@ function formatCompact(value: number | null | undefined): string {
 function displayName(name: string): string {
   return name.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
 }
+
+const BEDROOM_SLUG_MAP: Record<string, string> = {
+  Studio: "studio",
+  "1 B/R": "1br",
+  "2 B/R": "2br",
+  "3 B/R": "3br",
+  "4 B/R": "4br",
+  "5 B/R": "5br",
+};
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
@@ -82,7 +90,6 @@ export default async function AreaDetailPage({ params }: PageProps) {
     notFound();
   }
 
-  // Fetch optional data in parallel
   const [
     monthlyRes,
     bedroomsRes,
@@ -109,18 +116,18 @@ export default async function AreaDetailPage({ params }: PageProps) {
   const primary =
     detail.data.find((d: any) => d.property_type === "Unit") || detail.data[0];
 
-  // Calculate off-plan percentages
   const offplanTotal = offplan.reduce((sum, r) => sum + r.transaction_count, 0);
   const offplanPct = offplanTotal
     ? Math.round((offplan[0]?.transaction_count / offplanTotal) * 100)
     : 0;
 
-  // Calculate bedroom total for percentage
   const bedroomTotal = bedrooms.reduce((sum, r) => sum + r.transaction_count, 0);
   const topBedroom = bedrooms[0];
 
-  // Rent total
-  const rentTotal = rentData.reduce((sum: number, r: any) => sum + r.rent_count, 0);
+  const rentTotal = rentData.reduce(
+    (sum: number, r: any) => sum + r.rent_count,
+    0
+  );
 
   return (
     <div className="min-h-screen bg-zinc-50">
@@ -129,13 +136,9 @@ export default async function AreaDetailPage({ params }: PageProps) {
       <main className="max-w-7xl mx-auto px-4 md:px-6 py-6 md:py-12">
         {/* Breadcrumb */}
         <nav className="text-xs md:text-sm text-zinc-500 mb-5 md:mb-6 overflow-x-auto whitespace-nowrap">
-          <Link href="/" className="hover:text-zinc-900">
-            Home
-          </Link>
+          <Link href="/" className="hover:text-zinc-900">Home</Link>
           <span className="mx-2">/</span>
-          <Link href="/areas" className="hover:text-zinc-900">
-            Areas
-          </Link>
+          <Link href="/areas" className="hover:text-zinc-900">Areas</Link>
           <span className="mx-2">/</span>
           <span className="text-zinc-900">{nameInfo.primary}</span>
         </nav>
@@ -156,9 +159,7 @@ export default async function AreaDetailPage({ params }: PageProps) {
           </p>
         </div>
 
-        {/* ============================================ */}
-        {/* KEY FACTS — GEO optimized quotable block    */}
-        {/* ============================================ */}
+        {/* Key Facts */}
         {primary && (
           <div className="bg-gradient-to-br from-blue-50 to-white rounded-xl md:rounded-2xl border border-blue-200 p-5 md:p-8 mb-6 md:mb-8">
             <div className="flex items-center gap-2 mb-4">
@@ -172,8 +173,7 @@ export default async function AreaDetailPage({ params }: PageProps) {
                 <strong>{nameInfo.primary}&apos;s median sale price</strong> was{" "}
                 <strong>AED {formatAED(primary.median_price_aed)}</strong> from{" "}
                 {primary.first_transaction} to {primary.last_transaction} (
-                {primary.transaction_count.toLocaleString()} registered DLD
-                sales).
+                {primary.transaction_count.toLocaleString()} registered DLD sales).
               </li>
               <li>
                 <strong>Median price per square foot:</strong> AED{" "}
@@ -185,8 +185,7 @@ export default async function AreaDetailPage({ params }: PageProps) {
                   {formatAED(
                     rentData.find((r: any) => r.property_sub_type === "Flat")
                       ?.median_annual_rent || rentData[0]?.median_annual_rent
-                  )}
-                  {" "}
+                  )}{" "}
                   (from {rentTotal.toLocaleString()} registered contracts).
                 </li>
               )}
@@ -215,9 +214,7 @@ export default async function AreaDetailPage({ params }: PageProps) {
           </div>
         )}
 
-        {/* ============================================ */}
-        {/* Market Summary (KPI grid)                    */}
-        {/* ============================================ */}
+        {/* Market Summary */}
         {primary && (
           <div className="bg-white rounded-xl md:rounded-2xl shadow-sm border border-zinc-200 p-4 md:p-8 mb-6 md:mb-8">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4 md:mb-6">
@@ -281,9 +278,7 @@ export default async function AreaDetailPage({ params }: PageProps) {
           </div>
         )}
 
-        {/* ============================================ */}
-        {/* Monthly Chart                                */}
-        {/* ============================================ */}
+        {/* Monthly Chart */}
         {monthly.length > 1 && (
           <div className="bg-white rounded-xl md:rounded-2xl p-4 md:p-8 border border-zinc-200 mb-6 md:mb-8">
             <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-2 mb-4 md:mb-6">
@@ -292,8 +287,7 @@ export default async function AreaDetailPage({ params }: PageProps) {
                   Monthly Sales Activity
                 </h2>
                 <p className="text-[11px] md:text-xs text-zinc-500 mt-1">
-                  Transaction count (bars) and total volume in AED millions
-                  (line)
+                  Transaction count (bars) and total volume in AED millions (line)
                 </p>
               </div>
               <span className="text-[10px] md:text-xs text-zinc-500">
@@ -304,9 +298,7 @@ export default async function AreaDetailPage({ params }: PageProps) {
           </div>
         )}
 
-        {/* ============================================ */}
-        {/* Rental Market Section                        */}
-        {/* ============================================ */}
+        {/* Rental Market */}
         {rentData.length > 0 && (
           <div className="bg-white rounded-xl md:rounded-2xl shadow-sm border border-zinc-200 overflow-hidden mb-6 md:mb-8">
             <div className="px-4 md:px-6 py-4 border-b border-zinc-100">
@@ -391,9 +383,7 @@ export default async function AreaDetailPage({ params }: PageProps) {
           </div>
         )}
 
-        {/* ============================================ */}
-        {/* Bedroom Split                                */}
-        {/* ============================================ */}
+        {/* Bedroom Split */}
         {bedrooms.length > 0 && (
           <div className="bg-white rounded-xl md:rounded-2xl shadow-sm border border-zinc-200 overflow-hidden mb-6 md:mb-8">
             <div className="px-4 md:px-6 py-4 border-b border-zinc-100">
@@ -411,14 +401,24 @@ export default async function AreaDetailPage({ params }: PageProps) {
                 const pct = Math.round(
                   (row.transaction_count / bedroomTotal) * 100
                 );
+                const bedSlug = BEDROOM_SLUG_MAP[row.rooms];
+                const CardWrapper = bedSlug ? Link : "div";
+                const wrapperProps = bedSlug
+                  ? { href: `/areas/${slug}/${bedSlug}` }
+                  : {};
                 return (
-                  <div key={row.rooms} className="p-4">
+                  // @ts-ignore
+                  <CardWrapper
+                    key={row.rooms}
+                    {...wrapperProps}
+                    className="block p-4 hover:bg-zinc-50 transition"
+                  >
                     <div className="flex items-center justify-between mb-2">
                       <span className="font-semibold text-zinc-900 text-sm">
                         {row.rooms}
                       </span>
                       <span className="text-xs font-medium text-zinc-500">
-                        {pct}% of sales
+                        {pct}% of sales {bedSlug && "→"}
                       </span>
                     </div>
                     <div className="h-1.5 bg-zinc-100 rounded-full mb-3 overflow-hidden">
@@ -453,7 +453,7 @@ export default async function AreaDetailPage({ params }: PageProps) {
                         </div>
                       </div>
                     </div>
-                  </div>
+                  </CardWrapper>
                 );
               })}
             </div>
@@ -478,6 +478,7 @@ export default async function AreaDetailPage({ params }: PageProps) {
                     <th className="text-right px-6 py-3 text-xs font-semibold text-zinc-600 uppercase">
                       AED / sqft
                     </th>
+                    <th className="text-right px-6 py-3 text-xs font-semibold text-zinc-600 uppercase"></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-100">
@@ -485,6 +486,7 @@ export default async function AreaDetailPage({ params }: PageProps) {
                     const pct = Math.round(
                       (row.transaction_count / bedroomTotal) * 100
                     );
+                    const bedSlug = BEDROOM_SLUG_MAP[row.rooms];
                     return (
                       <tr key={row.rooms} className="hover:bg-zinc-50">
                         <td className="px-6 py-4 font-medium text-zinc-900">
@@ -512,6 +514,16 @@ export default async function AreaDetailPage({ params }: PageProps) {
                         <td className="px-6 py-4 text-right text-sm text-zinc-700">
                           {formatAED(row.median_aed_sqft)}
                         </td>
+                        <td className="px-6 py-4 text-right text-xs">
+                          {bedSlug && (
+                            <Link
+                              href={`/areas/${slug}/${bedSlug}`}
+                              className="text-blue-600 hover:underline"
+                            >
+                              View →
+                            </Link>
+                          )}
+                        </td>
                       </tr>
                     );
                   })}
@@ -521,9 +533,47 @@ export default async function AreaDetailPage({ params }: PageProps) {
           </div>
         )}
 
-        {/* ============================================ */}
-        {/* Off-Plan vs Ready Split                      */}
-        {/* ============================================ */}
+        {/* Bedroom Sub-Pages Links */}
+        {bedrooms.length > 0 && (
+          <div className="bg-white rounded-xl md:rounded-2xl shadow-sm border border-zinc-200 p-5 md:p-6 mb-6 md:mb-8">
+            <h3 className="text-sm font-semibold text-zinc-900 mb-1">
+              Explore specific configurations in {nameInfo.primary}
+            </h3>
+            <p className="text-xs text-zinc-500 mb-4">
+              Detailed market data for each apartment type
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {bedrooms
+                .map((b: any) => {
+                  const bedSlug = BEDROOM_SLUG_MAP[b.rooms];
+                  return bedSlug
+                    ? {
+                        slug: bedSlug,
+                        rooms: b.rooms,
+                        count: b.transaction_count,
+                      }
+                    : null;
+                })
+                .filter(Boolean)
+                .map((b: any) =>
+                  b ? (
+                    <Link
+                      key={b.slug}
+                      href={`/areas/${slug}/${b.slug}`}
+                      className="inline-flex items-center gap-2 bg-blue-50 hover:bg-blue-100 text-blue-800 text-sm px-3 py-1.5 rounded-lg border border-blue-200 transition"
+                    >
+                      {b.rooms}
+                      <span className="text-xs text-blue-600">
+                        ({b.count.toLocaleString()})
+                      </span>
+                    </Link>
+                  ) : null
+                )}
+            </div>
+          </div>
+        )}
+
+        {/* Off-Plan vs Ready Split */}
         {offplan.length >= 2 && (
           <div className="bg-white rounded-xl md:rounded-2xl shadow-sm border border-zinc-200 p-5 md:p-8 mb-6 md:mb-8">
             <h2 className="text-base md:text-lg font-semibold text-zinc-900 mb-1">
@@ -597,9 +647,7 @@ export default async function AreaDetailPage({ params }: PageProps) {
           </div>
         )}
 
-        {/* ============================================ */}
-        {/* All Property Types                           */}
-        {/* ============================================ */}
+        {/* All Property Types */}
         <div className="bg-white rounded-xl md:rounded-2xl shadow-sm border border-zinc-200 overflow-hidden mb-6 md:mb-8">
           <div className="px-4 md:px-6 py-4 border-b border-zinc-100">
             <h2 className="text-base md:text-lg font-semibold text-zinc-900">
@@ -607,7 +655,6 @@ export default async function AreaDetailPage({ params }: PageProps) {
             </h2>
           </div>
 
-          {/* Mobile cards */}
           <div className="md:hidden divide-y divide-zinc-100">
             {detail.data.map((row: any) => (
               <div key={row.property_type} className="p-4">
@@ -657,7 +704,6 @@ export default async function AreaDetailPage({ params }: PageProps) {
             ))}
           </div>
 
-          {/* Desktop table */}
           <div className="hidden md:block overflow-x-auto">
             <table className="w-full">
               <thead className="bg-zinc-50 border-b border-zinc-200">
@@ -714,9 +760,7 @@ export default async function AreaDetailPage({ params }: PageProps) {
           </div>
         </div>
 
-        {/* ============================================ */}
-        {/* FAQ Section — GEO optimized                  */}
-        {/* ============================================ */}
+        {/* FAQ */}
         {primary && (
           <div className="bg-white rounded-xl md:rounded-2xl shadow-sm border border-zinc-200 p-5 md:p-8 mb-6 md:mb-8">
             <h2 className="text-base md:text-lg font-semibold text-zinc-900 mb-6">
@@ -822,9 +866,7 @@ export default async function AreaDetailPage({ params }: PageProps) {
           </div>
         )}
 
-        {/* ============================================ */}
-        {/* Related Areas                                */}
-        {/* ============================================ */}
+        {/* Related Areas */}
         {related.length > 0 && (
           <div className="bg-white rounded-xl md:rounded-2xl shadow-sm border border-zinc-200 p-5 md:p-8 mb-6 md:mb-8">
             <h2 className="text-base md:text-lg font-semibold text-zinc-900 mb-1">
@@ -863,9 +905,7 @@ export default async function AreaDetailPage({ params }: PageProps) {
           </div>
         )}
 
-        {/* ============================================ */}
-        {/* CTA                                          */}
-        {/* ============================================ */}
+        {/* CTA */}
         <div className="bg-blue-50 border border-blue-200 rounded-xl md:rounded-2xl p-6 md:p-8 text-center">
           <h3 className="text-base md:text-lg font-semibold text-zinc-900 mb-2">
             Got a specific property in {nameInfo.primary}?

@@ -953,3 +953,187 @@ export async function getQ3Report() {
     source: { name: "Dubai Land Department", dataset: "Transactions" },
   };
 }
+// ============================================================
+// Bedroom-Split Pages
+// ============================================================
+
+// Bedroom slug ↔ DLD rooms value mapping
+export const BEDROOM_SLUGS: Record<string, string> = {
+  "studio": "Studio",
+  "1br": "1 B/R",
+  "2br": "2 B/R",
+  "3br": "3 B/R",
+  "4br": "4 B/R",
+  "5br": "5 B/R",
+};
+
+export function slugToBedroom(slug: string): string | null {
+  return BEDROOM_SLUGS[slug.toLowerCase()] || null;
+}
+
+export function bedroomToSlug(rooms: string): string | null {
+  for (const [slug, value] of Object.entries(BEDROOM_SLUGS)) {
+    if (value === rooms) return slug;
+  }
+  return null;
+}
+
+// Available bedrooms for an area (for "other configurations" links)
+interface AvailableBedroom {
+  rooms: string;
+  slug: string;
+  sale_count: number;
+}
+
+export async function getAvailableBedrooms(
+  areaName: string
+): Promise<AvailableBedroom[]> {
+  const rows = (await sql`
+    SELECT
+      t.rooms,
+      COUNT(*)::int AS sale_count
+    FROM core.transactions t
+    JOIN core.areas a ON t.area_id = a.area_id
+    WHERE UPPER(TRIM(a.normalized_name)) = UPPER(TRIM(${areaName}))
+      AND t.transaction_type = 'Sales'
+      AND t.amount > 0
+      AND t.property_type = 'Unit'
+      AND t.usage = 'Residential'
+      AND t.property_sub_type = 'Flat'
+      AND t.rooms IN ('Studio', '1 B/R', '2 B/R', '3 B/R', '4 B/R', '5 B/R')
+    GROUP BY t.rooms
+    HAVING COUNT(*) >= 20
+    ORDER BY t.rooms
+  `) as { rooms: string; sale_count: number }[];
+
+  return rows
+    .map((r) => ({
+      rooms: r.rooms,
+      slug: bedroomToSlug(r.rooms) || "",
+      sale_count: r.sale_count,
+    }))
+    .filter((r) => r.slug);
+}
+
+// Sales stats for a specific area + bedroom
+interface BedroomSalesStats {
+  sale_count: number;
+  median_price: number;
+  p25_price: number;
+  p75_price: number;
+  median_aed_sqft: number;
+  median_size_sqm: number;
+  min_size_sqm: number;
+  max_size_sqm: number;
+  first_date: string;
+  last_date: string;
+}
+
+export async function getBedroomSalesStats(
+  areaName: string,
+  rooms: string
+): Promise<BedroomSalesStats | null> {
+  const rows = (await sql`
+    SELECT
+      COUNT(*)::int AS sale_count,
+      ROUND(PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY t.amount)::numeric)::bigint AS median_price,
+      ROUND(PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY t.amount)::numeric)::bigint AS p25_price,
+      ROUND(PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY t.amount)::numeric)::bigint AS p75_price,
+      ROUND(PERCENTILE_CONT(0.5) WITHIN GROUP (
+        ORDER BY t.amount / NULLIF(t.property_size_sqm * 10.7639104167, 0)
+      )::numeric)::bigint AS median_aed_sqft,
+      ROUND(PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY t.property_size_sqm)::numeric, 2) AS median_size_sqm,
+      ROUND(MIN(t.property_size_sqm)::numeric, 2) AS min_size_sqm,
+      ROUND(MAX(t.property_size_sqm)::numeric, 2) AS max_size_sqm,
+      MIN(t.transaction_date)::text AS first_date,
+      MAX(t.transaction_date)::text AS last_date
+    FROM core.transactions t
+    JOIN core.areas a ON t.area_id = a.area_id
+    WHERE UPPER(TRIM(a.normalized_name)) = UPPER(TRIM(${areaName}))
+      AND t.transaction_type = 'Sales'
+      AND t.amount > 0
+      AND t.property_type = 'Unit'
+      AND t.usage = 'Residential'
+      AND t.property_sub_type = 'Flat'
+      AND t.rooms = ${rooms}
+      AND t.property_size_sqm BETWEEN 20 AND 500
+      AND (t.amount / NULLIF(t.property_size_sqm * 10.7639104167, 0)) BETWEEN 200 AND 10000
+  `) as BedroomSalesStats[];
+
+  return rows.length > 0 ? rows[0] : null;
+}
+
+// Rent stats for a specific area + bedroom
+interface BedroomRentStats {
+  rent_count: number;
+  median_annual_rent: number;
+  p25_annual_rent: number;
+  p75_annual_rent: number;
+  median_rent_sqft: number;
+}
+
+export async function getBedroomRentStats(
+  areaName: string,
+  rooms: string
+): Promise<BedroomRentStats | null> {
+  // Rents mein rooms numeric string hai ("1.0", "2.0", "0.0" = studio)
+  const roomsNumeric = rooms === "Studio"
+    ? ["0", "0.0"]
+    : [`${rooms.charAt(0)}`, `${rooms.charAt(0)}.0`];
+
+  const rows = (await sql`
+    SELECT
+      COUNT(*)::int AS rent_count,
+      ROUND(PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY r.annual_amount)::numeric)::bigint AS median_annual_rent,
+      ROUND(PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY r.annual_amount)::numeric)::bigint AS p25_annual_rent,
+      ROUND(PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY r.annual_amount)::numeric)::bigint AS p75_annual_rent,
+      ROUND(PERCENTILE_CONT(0.5) WITHIN GROUP (
+        ORDER BY r.annual_amount / NULLIF(r.property_size_sqm * 10.7639104167, 0)
+      )::numeric)::bigint AS median_rent_sqft
+    FROM core.rent_transactions r
+    JOIN core.areas a ON r.area_id = a.area_id
+    WHERE UPPER(TRIM(a.normalized_name)) = UPPER(TRIM(${areaName}))
+      AND r.annual_amount > 0
+      AND r.usage = 'Residential'
+      AND r.property_sub_type = 'Flat'
+      AND r.rooms = ANY(${roomsNumeric})
+      AND r.property_size_sqm BETWEEN 20 AND 500
+  `) as BedroomRentStats[];
+
+  return rows.length > 0 ? rows[0] : null;
+}
+
+// Monthly trend for area + bedroom
+export async function getBedroomMonthlyTrend(
+  areaName: string,
+  rooms: string
+) {
+  const rows = (await sql`
+    WITH monthly AS (
+      SELECT
+        DATE_TRUNC('month', t.transaction_date) AS month_ts,
+        COUNT(*)::int AS transaction_count,
+        ROUND(SUM(t.amount))::bigint AS volume_aed,
+        ROUND(PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY t.amount)::numeric)::bigint AS median_price_aed
+      FROM core.transactions t
+      JOIN core.areas a ON t.area_id = a.area_id
+      WHERE UPPER(TRIM(a.normalized_name)) = UPPER(TRIM(${areaName}))
+        AND t.transaction_type = 'Sales'
+        AND t.amount > 0
+        AND t.property_type = 'Unit'
+        AND t.usage = 'Residential'
+        AND t.property_sub_type = 'Flat'
+        AND t.rooms = ${rooms}
+      GROUP BY DATE_TRUNC('month', t.transaction_date)
+    )
+    SELECT
+      TO_CHAR(month_ts, 'YYYY-MM-DD') AS month,
+      transaction_count,
+      volume_aed,
+      median_price_aed
+    FROM monthly
+    ORDER BY month_ts
+  `) as any[];
+
+  return rows;
+}
