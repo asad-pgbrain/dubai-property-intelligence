@@ -740,3 +740,86 @@ export async function getAreaRentTrend(areaName: string) {
 
   return rows;
 }
+// ============================================================
+// Rents Overview (for /rents page)
+// ============================================================
+interface RentsStats {
+  total_rents: number;
+  total_annual_value: number;
+  median_annual_rent: number;
+  first_date: string;
+  last_date: string;
+  areas_count: number;
+}
+
+interface RentTrendRow {
+  month: string;
+  rent_count: number;
+  total_annual_value: number;
+  median_annual_rent: number;
+}
+
+interface TopRentAreaRow {
+  area_name: string;
+  rent_count: number;
+  median_annual_rent: number;
+  total_value: number;
+}
+
+export async function getRentsOverview() {
+  const statsRows = (await sql`
+    SELECT
+      COUNT(*)::int AS total_rents,
+      ROUND(SUM(annual_amount))::bigint AS total_annual_value,
+      ROUND(PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY annual_amount)::numeric)::bigint AS median_annual_rent,
+      MIN(registration_date)::text AS first_date,
+      MAX(registration_date)::text AS last_date,
+      COUNT(DISTINCT area_id)::int AS areas_count
+    FROM core.rent_transactions
+    WHERE annual_amount > 0
+      AND usage = 'Residential'
+  `) as RentsStats[];
+
+  const topAreas = (await sql`
+    SELECT
+      a.normalized_name AS area_name,
+      COUNT(*)::int AS rent_count,
+      ROUND(PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY r.annual_amount)::numeric)::bigint AS median_annual_rent,
+      ROUND(SUM(r.annual_amount))::bigint AS total_value
+    FROM core.rent_transactions r
+    JOIN core.areas a ON r.area_id = a.area_id
+    WHERE r.annual_amount > 0
+      AND r.usage = 'Residential'
+    GROUP BY a.normalized_name
+    ORDER BY rent_count DESC
+    LIMIT 10
+  `) as TopRentAreaRow[];
+
+  const monthlyTrend = (await sql`
+    WITH monthly AS (
+      SELECT
+        DATE_TRUNC('month', registration_date) AS month_ts,
+        COUNT(*)::int AS rent_count,
+        ROUND(SUM(annual_amount))::bigint AS total_annual_value,
+        ROUND(PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY annual_amount)::numeric)::bigint AS median_annual_rent
+      FROM core.rent_transactions
+      WHERE annual_amount > 0
+        AND usage = 'Residential'
+      GROUP BY DATE_TRUNC('month', registration_date)
+    )
+    SELECT
+      TO_CHAR(month_ts, 'YYYY-MM-DD') AS month,
+      rent_count,
+      total_annual_value,
+      median_annual_rent
+    FROM monthly
+    ORDER BY month_ts
+  `) as RentTrendRow[];
+
+  return {
+    stats: statsRows[0],
+    top_areas: topAreas,
+    monthly_trend: monthlyTrend,
+    source: { name: "Dubai Land Department", dataset: "Rents" },
+  };
+}

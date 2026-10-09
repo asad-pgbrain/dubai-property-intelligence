@@ -1,0 +1,118 @@
+"use client";
+
+import {
+  ResponsiveContainer,
+  ComposedChart,
+  Bar,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+} from "recharts";
+
+interface TrendRow {
+  month: string;
+  rent_count: number;
+  total_annual_value: number;
+  median_annual_rent: number;
+}
+
+interface Props {
+  data: TrendRow[];
+}
+
+function formatMonth(month: string): string {
+  const d = new Date(month);
+  return d.toLocaleDateString("en-US", { month: "short", year: "2-digit" });
+}
+
+function formatCompact(value: number): string {
+  if (value >= 1_000_000_000) return `${(value / 1_000_000_000).toFixed(1)}B`;
+  if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`;
+  if (value >= 1_000) return `${(value / 1_000).toFixed(0)}K`;
+  return String(value);
+}
+
+export default function RentsChart({ data }: Props) {
+  const chartData = data.map((d) => ({
+    month: formatMonth(d.month),
+    rents: d.rent_count,
+    value: Math.round(Number(d.total_annual_value) / 1_000_000),
+  }));
+
+  return (
+    <div className="w-full h-64 md:h-80">
+      <ResponsiveContainer width="100%" height="100%">
+        <ComposedChart
+          data={chartData}
+          margin={{ top: 10, right: 5, left: -15, bottom: 0 }}
+        >
+          <CartesianGrid
+            strokeDasharray="3 3"
+            stroke="#e5e7eb"
+            vertical={false}
+          />
+          <XAxis
+            dataKey="month"
+            tick={{ fill: "#71717a", fontSize: 10 }}
+            axisLine={{ stroke: "#e5e7eb" }}
+            tickLine={false}
+          />
+          <YAxis
+            yAxisId="left"
+            tick={{ fill: "#71717a", fontSize: 10 }}
+            axisLine={false}
+            tickLine={false}
+            tickFormatter={formatCompact}
+          />
+          <YAxis
+            yAxisId="right"
+            orientation="right"
+            tick={{ fill: "#71717a", fontSize: 10 }}
+            axisLine={false}
+            tickLine={false}
+            tickFormatter={(v) => `${v}M`}
+          />
+          <Tooltip
+            contentStyle={{
+              backgroundColor: "white",
+              border: "1px solid #e5e7eb",
+              borderRadius: "8px",
+              fontSize: "11px",
+              boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
+            }}
+            labelStyle={{
+              fontWeight: 600,
+              color: "#18181b",
+              marginBottom: "4px",
+            }}
+          />
+          <Legend
+            wrapperStyle={{ fontSize: "11px", paddingTop: "8px" }}
+            iconType="circle"
+          />
+          <Bar
+            yAxisId="left"
+            dataKey="rents"
+            name="Contracts"
+            fill="#8b5cf6"
+            radius={[4, 4, 0, 0]}
+            maxBarSize={40}
+          />
+          <Line
+            yAxisId="right"
+            type="monotone"
+            dataKey="value"
+            name="Value (AED M)"
+            stroke="#10b981"
+            strokeWidth={2}
+            dot={{ r: 3, fill: "#10b981" }}
+            activeDot={{ r: 5 }}
+          />
+        </ComposedChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
