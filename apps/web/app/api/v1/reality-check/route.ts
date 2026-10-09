@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { realityCheck } from "@/lib/queries";
-import { safeError, badRequest } from "@/lib/errors";
+import { safeError, badRequest, rateLimited } from "@/lib/errors";
 import {
   isValidAreaName,
   isValidPropertyType,
@@ -8,10 +8,17 @@ import {
   isValidSizeSqm,
   isValidAskingPrice,
 } from "@/lib/validators";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
+  // Rate limit check (STRICT — 30 req/min)
+  const { success, remaining, reset } = await checkRateLimit(request, "strict");
+  if (!success) {
+    return rateLimited(60);
+  }
+
   const { searchParams } = new URL(request.url);
 
   const area = searchParams.get("area");
@@ -44,7 +51,12 @@ export async function GET(request: NextRequest) {
       size_sqm: size_sqm ? parseFloat(size_sqm) : null,
       asking_price: asking_price ? parseFloat(asking_price) : null,
     });
-    return NextResponse.json(data);
+    return NextResponse.json(data, {
+      headers: {
+        "X-RateLimit-Remaining": String(remaining),
+        "X-RateLimit-Reset": String(reset),
+      },
+    });
   } catch (e) {
     if (e instanceof Error && e.message.includes("No market data")) {
       return NextResponse.json(
