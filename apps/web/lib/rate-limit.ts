@@ -1,28 +1,42 @@
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 
-// Check env vars
-if (
-  !process.env.UPSTASH_REDIS_REST_URL ||
-  !process.env.UPSTASH_REDIS_REST_TOKEN
-) {
+function isValidUpstashUrl(url: string | undefined): url is string {
+  if (!url) return false;
+  if (!url.startsWith("https://")) return false;
+  try {
+    new URL(url);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function isValidUpstashToken(token: string | undefined): token is string {
+  if (!token) return false;
+  if (token.length < 20) return false;
+  return true;
+}
+
+const url = process.env.UPSTASH_REDIS_REST_URL;
+const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+
+const hasValidCredentials =
+  isValidUpstashUrl(url) && isValidUpstashToken(token);
+
+if (!hasValidCredentials) {
   console.warn(
-    "[RATE LIMIT] Upstash credentials missing. Rate limiting disabled."
+    "[RATE LIMIT] Upstash credentials missing or invalid. Rate limiting disabled."
   );
 }
 
-const redis =
-  process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN
-    ? new Redis({
-        url: process.env.UPSTASH_REDIS_REST_URL,
-        token: process.env.UPSTASH_REDIS_REST_TOKEN,
-      })
-    : null;
+const redis = hasValidCredentials
+  ? new Redis({
+      url,
+      token,
+    })
+  : null;
 
-/**
- * Strict rate limit: 30 requests per minute per IP.
- * For expensive endpoints (reality-check, market, rents).
- */
 export const strictLimiter = redis
   ? new Ratelimit({
       redis,
@@ -32,10 +46,6 @@ export const strictLimiter = redis
     })
   : null;
 
-/**
- * Standard rate limit: 100 requests per minute per IP.
- * For general endpoints (areas list, health).
- */
 export const standardLimiter = redis
   ? new Ratelimit({
       redis,
@@ -45,10 +55,6 @@ export const standardLimiter = redis
     })
   : null;
 
-/**
- * Get client IP from request headers.
- * Vercel populates x-forwarded-for.
- */
 export function getClientIp(request: Request): string {
   const forwarded = request.headers.get("x-forwarded-for");
   if (forwarded) {
@@ -59,10 +65,6 @@ export function getClientIp(request: Request): string {
   return "anonymous";
 }
 
-/**
- * Check rate limit. Returns { success, limit, remaining, reset }.
- * If Upstash is not configured, always returns success (fails open).
- */
 export async function checkRateLimit(
   request: Request,
   type: "strict" | "standard" = "standard"
@@ -73,7 +75,12 @@ export async function checkRateLimit(
     return { success: true, limit: 0, remaining: 0, reset: 0 };
   }
 
-  const ip = getClientIp(request);
-  const result = await limiter.limit(ip);
-  return result;
+  try {
+    const ip = getClientIp(request);
+    const result = await limiter.limit(ip);
+    return result;
+  } catch (e) {
+    console.error("[RATE LIMIT] Check failed:", e);
+    return { success: true, limit: 0, remaining: 0, reset: 0 };
+  }
 }
