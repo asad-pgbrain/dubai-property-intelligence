@@ -10,6 +10,8 @@ import {
   getAreaBedroomSplit,
   getAreaOffPlanSplit,
   getRelatedAreas,
+  getAreaRentSummary,
+  getAreaRentTrend,
 } from "@/lib/queries";
 import { getDisplayNameWithAlias } from "@/lib/aliases";
 import { DATA_STATS } from "@/lib/constants";
@@ -71,6 +73,8 @@ export default async function AreaDetailPage({ params }: PageProps) {
   let bedrooms: any[] = [];
   let offplan: any[] = [];
   let related: any[] = [];
+  let rentData: any[] = [];
+  let rentTrend: any[] = [];
 
   try {
     detail = await getAreaDetail(areaName);
@@ -79,19 +83,31 @@ export default async function AreaDetailPage({ params }: PageProps) {
   }
 
   // Fetch optional data in parallel
-  const [monthlyRes, bedroomsRes, offplanRes, relatedRes] = await Promise.allSettled([
+  const [
+    monthlyRes,
+    bedroomsRes,
+    offplanRes,
+    relatedRes,
+    rentRes,
+    rentTrendRes,
+  ] = await Promise.allSettled([
     getAreaMonthly(areaName),
     getAreaBedroomSplit(areaName),
     getAreaOffPlanSplit(areaName),
     getRelatedAreas(areaName, 5),
+    getAreaRentSummary(areaName),
+    getAreaRentTrend(areaName),
   ]);
 
   if (monthlyRes.status === "fulfilled") monthly = monthlyRes.value.data;
   if (bedroomsRes.status === "fulfilled") bedrooms = bedroomsRes.value;
   if (offplanRes.status === "fulfilled") offplan = offplanRes.value;
   if (relatedRes.status === "fulfilled") related = relatedRes.value;
+  if (rentRes.status === "fulfilled") rentData = rentRes.value;
+  if (rentTrendRes.status === "fulfilled") rentTrend = rentTrendRes.value;
 
-  const primary = detail.data.find((d: any) => d.property_type === "Unit") || detail.data[0];
+  const primary =
+    detail.data.find((d: any) => d.property_type === "Unit") || detail.data[0];
 
   // Calculate off-plan percentages
   const offplanTotal = offplan.reduce((sum, r) => sum + r.transaction_count, 0);
@@ -103,6 +119,9 @@ export default async function AreaDetailPage({ params }: PageProps) {
   const bedroomTotal = bedrooms.reduce((sum, r) => sum + r.transaction_count, 0);
   const topBedroom = bedrooms[0];
 
+  // Rent total
+  const rentTotal = rentData.reduce((sum: number, r: any) => sum + r.rent_count, 0);
+
   return (
     <div className="min-h-screen bg-zinc-50">
       <Header />
@@ -110,9 +129,13 @@ export default async function AreaDetailPage({ params }: PageProps) {
       <main className="max-w-7xl mx-auto px-4 md:px-6 py-6 md:py-12">
         {/* Breadcrumb */}
         <nav className="text-xs md:text-sm text-zinc-500 mb-5 md:mb-6 overflow-x-auto whitespace-nowrap">
-          <Link href="/" className="hover:text-zinc-900">Home</Link>
+          <Link href="/" className="hover:text-zinc-900">
+            Home
+          </Link>
           <span className="mx-2">/</span>
-          <Link href="/areas" className="hover:text-zinc-900">Areas</Link>
+          <Link href="/areas" className="hover:text-zinc-900">
+            Areas
+          </Link>
           <span className="mx-2">/</span>
           <span className="text-zinc-900">{nameInfo.primary}</span>
         </nav>
@@ -128,7 +151,8 @@ export default async function AreaDetailPage({ params }: PageProps) {
             </p>
           )}
           <p className="text-sm md:text-base text-zinc-600 max-w-3xl">
-            Registered transaction data for {nameInfo.primary} from the Dubai Land Department.
+            Registered transaction data for {nameInfo.primary} from the Dubai
+            Land Department.
           </p>
         </div>
 
@@ -148,16 +172,30 @@ export default async function AreaDetailPage({ params }: PageProps) {
                 <strong>{nameInfo.primary}&apos;s median sale price</strong> was{" "}
                 <strong>AED {formatAED(primary.median_price_aed)}</strong> from{" "}
                 {primary.first_transaction} to {primary.last_transaction} (
-                {primary.transaction_count.toLocaleString()} registered DLD sales).
+                {primary.transaction_count.toLocaleString()} registered DLD
+                sales).
               </li>
               <li>
                 <strong>Median price per square foot:</strong> AED{" "}
                 {formatAED(primary.median_aed_sqft)}.
               </li>
+              {rentData.length > 0 && (
+                <li>
+                  <strong>Median annual rent:</strong> AED{" "}
+                  {formatAED(
+                    rentData.find((r: any) => r.property_sub_type === "Flat")
+                      ?.median_annual_rent || rentData[0]?.median_annual_rent
+                  )}
+                  {" "}
+                  (from {rentTotal.toLocaleString()} registered contracts).
+                </li>
+              )}
               {topBedroom && (
                 <li>
-                  <strong>Most active configuration:</strong> {topBedroom.rooms} —{" "}
-                  {Math.round((topBedroom.transaction_count / bedroomTotal) * 100)}% of sales.
+                  <strong>Most active configuration:</strong> {topBedroom.rooms}{" "}
+                  —{" "}
+                  {Math.round((topBedroom.transaction_count / bedroomTotal) * 100)}
+                  % of sales.
                 </li>
               )}
               {offplan.length >= 2 && (
@@ -171,7 +209,8 @@ export default async function AreaDetailPage({ params }: PageProps) {
               </li>
             </ul>
             <div className="mt-4 pt-4 border-t border-blue-200 text-xs text-blue-800">
-              Source: Dubai Land Department Transactions dataset · Sales only
+              Source: Dubai Land Department Transactions + Rents datasets ·
+              Sales and Residential rents only
             </div>
           </div>
         )}
@@ -183,7 +222,7 @@ export default async function AreaDetailPage({ params }: PageProps) {
           <div className="bg-white rounded-xl md:rounded-2xl shadow-sm border border-zinc-200 p-4 md:p-8 mb-6 md:mb-8">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4 md:mb-6">
               <h2 className="text-base md:text-lg font-semibold text-zinc-900">
-                Market Summary
+                Sales Market Summary
               </h2>
               <span
                 className={`text-xs font-semibold px-2.5 py-1 rounded-full self-start ${
@@ -228,13 +267,16 @@ export default async function AreaDetailPage({ params }: PageProps) {
                   25th - 75th
                 </div>
                 <div className="text-xs md:text-sm font-semibold text-zinc-700">
-                  {formatCompact(primary.p25_price_aed)} - {formatCompact(primary.p75_price_aed)}
+                  {formatCompact(primary.p25_price_aed)} -{" "}
+                  {formatCompact(primary.p75_price_aed)}
                 </div>
               </div>
             </div>
 
             <div className="mt-4 md:mt-6 pt-4 md:pt-6 border-t border-zinc-100 text-[11px] md:text-xs text-zinc-500">
-              <strong>Period:</strong> {primary.first_transaction} to {primary.last_transaction} · <strong>Source:</strong> {detail.source.name}
+              <strong>Period:</strong> {primary.first_transaction} to{" "}
+              {primary.last_transaction} · <strong>Source:</strong>{" "}
+              {detail.source.name}
             </div>
           </div>
         )}
@@ -250,7 +292,8 @@ export default async function AreaDetailPage({ params }: PageProps) {
                   Monthly Sales Activity
                 </h2>
                 <p className="text-[11px] md:text-xs text-zinc-500 mt-1">
-                  Transaction count (bars) and total volume in AED millions (line)
+                  Transaction count (bars) and total volume in AED millions
+                  (line)
                 </p>
               </div>
               <span className="text-[10px] md:text-xs text-zinc-500">
@@ -258,6 +301,93 @@ export default async function AreaDetailPage({ params }: PageProps) {
               </span>
             </div>
             <MonthlyChart data={monthly} />
+          </div>
+        )}
+
+        {/* ============================================ */}
+        {/* Rental Market Section                        */}
+        {/* ============================================ */}
+        {rentData.length > 0 && (
+          <div className="bg-white rounded-xl md:rounded-2xl shadow-sm border border-zinc-200 overflow-hidden mb-6 md:mb-8">
+            <div className="px-4 md:px-6 py-4 border-b border-zinc-100">
+              <h2 className="text-base md:text-lg font-semibold text-zinc-900">
+                Rental Market
+              </h2>
+              <p className="text-xs text-zinc-500 mt-1">
+                Median annual rents from {rentTotal.toLocaleString()} registered
+                contracts
+              </p>
+            </div>
+
+            <div className="divide-y divide-zinc-100">
+              {rentData.map((row: any) => (
+                <div key={row.property_sub_type} className="p-4 md:p-6">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="font-semibold text-zinc-900 text-sm">
+                      {row.property_sub_type}
+                    </span>
+                    <span className="text-xs text-zinc-500">
+                      {row.rent_count.toLocaleString()} contracts
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div>
+                      <div className="text-[10px] uppercase text-zinc-400 mb-1">
+                        Median Rent
+                      </div>
+                      <div className="text-base md:text-lg font-bold text-zinc-900">
+                        AED {formatAED(row.median_annual_rent)}
+                      </div>
+                      <div className="text-[10px] text-zinc-400">per year</div>
+                    </div>
+                    <div>
+                      <div className="text-[10px] uppercase text-zinc-400 mb-1">
+                        25th – 75th
+                      </div>
+                      <div className="text-xs md:text-sm font-medium text-zinc-700">
+                        {formatCompact(row.p25_annual_rent)} –{" "}
+                        {formatCompact(row.p75_annual_rent)}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-[10px] uppercase text-zinc-400 mb-1">
+                        Rent / sqft
+                      </div>
+                      <div className="text-sm md:text-base font-semibold text-zinc-900">
+                        {formatAED(row.median_rent_sqft)}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-[10px] uppercase text-zinc-400 mb-1">
+                        Est. Gross Yield
+                      </div>
+                      <div className="text-sm md:text-base font-semibold text-emerald-600">
+                        {primary && primary.median_price_aed
+                          ? `${(
+                              (Number(row.median_annual_rent) /
+                                Number(primary.median_price_aed)) *
+                              100
+                            ).toFixed(2)}%`
+                          : "-"}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="px-4 md:px-6 py-3 bg-zinc-50 border-t border-zinc-100 text-[11px] text-zinc-500">
+              Yield estimate uses median sale price for{" "}
+              {primary?.property_type || "Unit"}. For interactive calculation,
+              use the{" "}
+              <Link
+                href="/calculators/rental-yield"
+                className="text-blue-600 hover:underline"
+              >
+                Rental Yield Calculator
+              </Link>
+              .
+            </div>
           </div>
         )}
 
@@ -278,7 +408,9 @@ export default async function AreaDetailPage({ params }: PageProps) {
             {/* Mobile cards */}
             <div className="md:hidden divide-y divide-zinc-100">
               {bedrooms.map((row) => {
-                const pct = Math.round((row.transaction_count / bedroomTotal) * 100);
+                const pct = Math.round(
+                  (row.transaction_count / bedroomTotal) * 100
+                );
                 return (
                   <div key={row.rooms} className="p-4">
                     <div className="flex items-center justify-between mb-2">
@@ -297,19 +429,25 @@ export default async function AreaDetailPage({ params }: PageProps) {
                     </div>
                     <div className="grid grid-cols-3 gap-2">
                       <div>
-                        <div className="text-[10px] uppercase text-zinc-400">Sales</div>
+                        <div className="text-[10px] uppercase text-zinc-400">
+                          Sales
+                        </div>
                         <div className="text-xs font-medium text-zinc-700">
                           {row.transaction_count.toLocaleString()}
                         </div>
                       </div>
                       <div>
-                        <div className="text-[10px] uppercase text-zinc-400">Median</div>
+                        <div className="text-[10px] uppercase text-zinc-400">
+                          Median
+                        </div>
                         <div className="text-xs font-semibold text-zinc-900">
                           {formatCompact(row.median_price_aed)}
                         </div>
                       </div>
                       <div>
-                        <div className="text-[10px] uppercase text-zinc-400">AED/sqft</div>
+                        <div className="text-[10px] uppercase text-zinc-400">
+                          AED/sqft
+                        </div>
                         <div className="text-xs font-medium text-zinc-700">
                           {formatAED(row.median_aed_sqft)}
                         </div>
@@ -344,7 +482,9 @@ export default async function AreaDetailPage({ params }: PageProps) {
                 </thead>
                 <tbody className="divide-y divide-zinc-100">
                   {bedrooms.map((row) => {
-                    const pct = Math.round((row.transaction_count / bedroomTotal) * 100);
+                    const pct = Math.round(
+                      (row.transaction_count / bedroomTotal) * 100
+                    );
                     return (
                       <tr key={row.rooms} className="hover:bg-zinc-50">
                         <td className="px-6 py-4 font-medium text-zinc-900">
@@ -395,7 +535,9 @@ export default async function AreaDetailPage({ params }: PageProps) {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {offplan.map((row) => {
-                const pct = Math.round((row.transaction_count / offplanTotal) * 100);
+                const pct = Math.round(
+                  (row.transaction_count / offplanTotal) * 100
+                );
                 const isOffplan = row.is_offplan === "Off-Plan";
                 return (
                   <div
@@ -487,19 +629,25 @@ export default async function AreaDetailPage({ params }: PageProps) {
                 </div>
                 <div className="grid grid-cols-3 gap-2">
                   <div>
-                    <div className="text-[10px] uppercase text-zinc-400">Sales</div>
+                    <div className="text-[10px] uppercase text-zinc-400">
+                      Sales
+                    </div>
                     <div className="text-xs font-medium text-zinc-700">
                       {row.transaction_count.toLocaleString()}
                     </div>
                   </div>
                   <div>
-                    <div className="text-[10px] uppercase text-zinc-400">Median</div>
+                    <div className="text-[10px] uppercase text-zinc-400">
+                      Median
+                    </div>
                     <div className="text-xs font-semibold text-zinc-900">
                       {formatAED(row.median_price_aed)}
                     </div>
                   </div>
                   <div>
-                    <div className="text-[10px] uppercase text-zinc-400">AED/sqft</div>
+                    <div className="text-[10px] uppercase text-zinc-400">
+                      AED/sqft
+                    </div>
                     <div className="text-xs font-medium text-zinc-700">
                       {formatAED(row.median_aed_sqft)}
                     </div>
@@ -514,17 +662,29 @@ export default async function AreaDetailPage({ params }: PageProps) {
             <table className="w-full">
               <thead className="bg-zinc-50 border-b border-zinc-200">
                 <tr>
-                  <th className="text-left px-6 py-3 text-xs font-semibold text-zinc-600 uppercase">Type</th>
-                  <th className="text-right px-6 py-3 text-xs font-semibold text-zinc-600 uppercase">Transactions</th>
-                  <th className="text-right px-6 py-3 text-xs font-semibold text-zinc-600 uppercase">Median Price</th>
-                  <th className="text-right px-6 py-3 text-xs font-semibold text-zinc-600 uppercase">AED / sqft</th>
-                  <th className="text-right px-6 py-3 text-xs font-semibold text-zinc-600 uppercase">Coverage</th>
+                  <th className="text-left px-6 py-3 text-xs font-semibold text-zinc-600 uppercase">
+                    Type
+                  </th>
+                  <th className="text-right px-6 py-3 text-xs font-semibold text-zinc-600 uppercase">
+                    Transactions
+                  </th>
+                  <th className="text-right px-6 py-3 text-xs font-semibold text-zinc-600 uppercase">
+                    Median Price
+                  </th>
+                  <th className="text-right px-6 py-3 text-xs font-semibold text-zinc-600 uppercase">
+                    AED / sqft
+                  </th>
+                  <th className="text-right px-6 py-3 text-xs font-semibold text-zinc-600 uppercase">
+                    Coverage
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-100">
                 {detail.data.map((row: any) => (
                   <tr key={row.property_type} className="hover:bg-zinc-50">
-                    <td className="px-6 py-4 font-medium text-zinc-900">{row.property_type}</td>
+                    <td className="px-6 py-4 font-medium text-zinc-900">
+                      {row.property_type}
+                    </td>
                     <td className="px-6 py-4 text-right text-sm text-zinc-700">
                       {row.transaction_count.toLocaleString()}
                     </td>
@@ -572,7 +732,8 @@ export default async function AreaDetailPage({ params }: PageProps) {
                   The median sale price in {nameInfo.primary} was AED{" "}
                   {formatAED(primary.median_price_aed)} based on{" "}
                   {primary.transaction_count.toLocaleString()} registered sales
-                  from {primary.first_transaction} to {primary.last_transaction}.
+                  from {primary.first_transaction} to{" "}
+                  {primary.last_transaction}.
                 </p>
               </div>
 
@@ -587,6 +748,47 @@ export default async function AreaDetailPage({ params }: PageProps) {
                 </p>
               </div>
 
+              {rentData.length > 0 && (
+                <div>
+                  <h3 className="font-semibold text-zinc-900 text-sm md:text-base mb-2">
+                    What is the median annual rent in {nameInfo.primary}?
+                  </h3>
+                  <p className="text-sm text-zinc-600 leading-relaxed">
+                    The median annual rent in {nameInfo.primary} for flats is
+                    AED{" "}
+                    {formatAED(
+                      rentData.find(
+                        (r: any) => r.property_sub_type === "Flat"
+                      )?.median_annual_rent || rentData[0]?.median_annual_rent
+                    )}
+                    , based on {rentTotal.toLocaleString()} registered rental
+                    contracts.
+                  </p>
+                </div>
+              )}
+
+              {primary && rentData.length > 0 && (
+                <div>
+                  <h3 className="font-semibold text-zinc-900 text-sm md:text-base mb-2">
+                    What is the typical rental yield in {nameInfo.primary}?
+                  </h3>
+                  <p className="text-sm text-zinc-600 leading-relaxed">
+                    Based on median sale price and median rent, the estimated
+                    gross rental yield in {nameInfo.primary} is approximately{" "}
+                    {(
+                      (Number(
+                        rentData.find(
+                          (r: any) => r.property_sub_type === "Flat"
+                        )?.median_annual_rent || rentData[0]?.median_annual_rent
+                      ) /
+                        Number(primary.median_price_aed)) *
+                      100
+                    ).toFixed(2)}
+                    %.
+                  </p>
+                </div>
+              )}
+
               {topBedroom && (
                 <div>
                   <h3 className="font-semibold text-zinc-900 text-sm md:text-base mb-2">
@@ -595,9 +797,11 @@ export default async function AreaDetailPage({ params }: PageProps) {
                   <p className="text-sm text-zinc-600 leading-relaxed">
                     The most active configuration in {nameInfo.primary} is{" "}
                     {topBedroom.rooms}, accounting for{" "}
-                    {Math.round((topBedroom.transaction_count / bedroomTotal) * 100)}
-                    % of transactions. The median price for {topBedroom.rooms} is
-                    AED {formatAED(topBedroom.median_price_aed)}.
+                    {Math.round(
+                      (topBedroom.transaction_count / bedroomTotal) * 100
+                    )}
+                    % of transactions. The median price for {topBedroom.rooms}{" "}
+                    is AED {formatAED(topBedroom.median_price_aed)}.
                   </p>
                 </div>
               )}
@@ -614,18 +818,6 @@ export default async function AreaDetailPage({ params }: PageProps) {
                   </p>
                 </div>
               )}
-
-              <div>
-                <h3 className="font-semibold text-zinc-900 text-sm md:text-base mb-2">
-                  How many properties sold in {nameInfo.primary} in 2026?
-                </h3>
-                <p className="text-sm text-zinc-600 leading-relaxed">
-                  {primary.transaction_count.toLocaleString()} properties sold
-                  in {nameInfo.primary} between {primary.first_transaction} and{" "}
-                  {primary.last_transaction}, according to Dubai Land Department
-                  data.
-                </p>
-              </div>
             </div>
           </div>
         )}
@@ -683,17 +875,25 @@ export default async function AreaDetailPage({ params }: PageProps) {
             {primary ? primary.transaction_count.toLocaleString() : "our"}{" "}
             comparable transactions.
           </p>
-          <Link
-            href="/"
-            className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-5 md:px-6 py-2.5 md:py-3 rounded-lg transition text-sm"
-          >
-            Run a Reality Check
-          </Link>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <Link
+              href="/"
+              className="inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-5 md:px-6 py-2.5 md:py-3 rounded-lg transition text-sm"
+            >
+              Run a Reality Check
+            </Link>
+            <Link
+              href="/calculators/rental-yield"
+              className="inline-flex items-center justify-center gap-2 bg-white hover:bg-zinc-50 border border-zinc-300 text-zinc-900 font-semibold px-5 md:px-6 py-2.5 md:py-3 rounded-lg transition text-sm"
+            >
+              Calculate Rental Yield
+            </Link>
+          </div>
         </div>
 
         <div className="mt-6 md:mt-8 text-[11px] md:text-xs text-zinc-500 text-center">
-          Source: {detail.source.name} - {detail.source.dataset} dataset. Sales
-          only. Not investment advice.
+          Source: {detail.source.name} - Transactions + Rents datasets. Sales
+          and residential rents only. Not investment advice.
         </div>
       </main>
 

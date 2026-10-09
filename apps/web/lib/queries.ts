@@ -632,3 +632,100 @@ export async function realityCheck(input: {
 
   return response;
 }
+// ============================================================
+// Area Rent Summary (for area detail page)
+// ============================================================
+interface AreaRentRow {
+  area_name: string;
+  property_sub_type: string;
+  rent_count: number;
+  median_annual_rent: number;
+  p25_annual_rent: number;
+  p75_annual_rent: number;
+  median_rent_sqft: number;
+}
+
+export async function getAreaRentSummary(areaName: string) {
+  // Try group first (Dubai Marina → Marsa Dubai)
+  const groupRows = (await sql`
+    SELECT
+      g.display_name AS area_name,
+      r.property_sub_type,
+      COUNT(*)::int AS rent_count,
+      ROUND(PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY r.annual_amount)::numeric)::bigint AS median_annual_rent,
+      ROUND(PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY r.annual_amount)::numeric)::bigint AS p25_annual_rent,
+      ROUND(PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY r.annual_amount)::numeric)::bigint AS p75_annual_rent,
+      ROUND(PERCENTILE_CONT(0.5) WITHIN GROUP (
+        ORDER BY r.annual_amount / NULLIF(r.property_size_sqm * 10.7639104167, 0)
+      )::numeric)::bigint AS median_rent_sqft
+    FROM core.area_groups g
+    JOIN core.rent_transactions r ON r.area_id = ANY(g.area_ids)
+    WHERE LOWER(g.group_name) = LOWER(${areaName})
+      AND r.annual_amount > 0
+      AND r.property_size_sqm BETWEEN 20 AND 1000
+      AND r.usage = 'Residential'
+      AND r.property_sub_type IN ('Flat', 'Villa', 'Studio', 'Penthouse')
+    GROUP BY g.display_name, r.property_sub_type
+  `) as AreaRentRow[];
+
+  if (groupRows.length > 0) return groupRows;
+
+  // Fallback direct
+  const directRows = (await sql`
+    SELECT
+      a.normalized_name AS area_name,
+      r.property_sub_type,
+      COUNT(*)::int AS rent_count,
+      ROUND(PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY r.annual_amount)::numeric)::bigint AS median_annual_rent,
+      ROUND(PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY r.annual_amount)::numeric)::bigint AS p25_annual_rent,
+      ROUND(PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY r.annual_amount)::numeric)::bigint AS p75_annual_rent,
+      ROUND(PERCENTILE_CONT(0.5) WITHIN GROUP (
+        ORDER BY r.annual_amount / NULLIF(r.property_size_sqm * 10.7639104167, 0)
+      )::numeric)::bigint AS median_rent_sqft
+    FROM core.rent_transactions r
+    JOIN core.areas a ON r.area_id = a.area_id
+    WHERE UPPER(TRIM(a.normalized_name)) = UPPER(TRIM(${areaName}))
+      AND r.annual_amount > 0
+      AND r.property_size_sqm BETWEEN 20 AND 1000
+      AND r.usage = 'Residential'
+      AND r.property_sub_type IN ('Flat', 'Villa', 'Studio', 'Penthouse')
+    GROUP BY a.normalized_name, r.property_sub_type
+  `) as AreaRentRow[];
+
+  return directRows;
+}
+
+// ============================================================
+// Area Rent Trend (monthly)
+// ============================================================
+interface RentTrendRow {
+  month: string;
+  rent_count: number;
+  median_annual_rent: number;
+}
+
+export async function getAreaRentTrend(areaName: string) {
+  const rows = (await sql`
+    WITH monthly AS (
+      SELECT
+        DATE_TRUNC('month', r.registration_date) AS month_ts,
+        COUNT(*)::int AS rent_count,
+        ROUND(PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY r.annual_amount)::numeric)::bigint AS median_annual_rent
+      FROM core.rent_transactions r
+      JOIN core.areas a ON r.area_id = a.area_id
+      WHERE UPPER(TRIM(a.normalized_name)) = UPPER(TRIM(${areaName}))
+        AND r.annual_amount > 0
+        AND r.usage = 'Residential'
+        AND r.property_sub_type = 'Flat'
+      GROUP BY DATE_TRUNC('month', r.registration_date)
+    )
+    SELECT
+      TO_CHAR(month_ts, 'YYYY-MM-DD') AS month,
+      rent_count,
+      median_annual_rent
+    FROM monthly
+    ORDER BY month_ts
+  `) as RentTrendRow[];
+
+  return rows;
+}
