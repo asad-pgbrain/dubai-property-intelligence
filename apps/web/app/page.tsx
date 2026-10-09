@@ -242,7 +242,48 @@ export default async function Home() {
             </div>
           </section>
         )}
+        {/* Latest Report */}
+        <section className="py-12 md:py-20">
+          <div className="max-w-7xl mx-auto px-4 md:px-6">
+            <div className="bg-gradient-to-br from-blue-600 to-blue-800 rounded-2xl p-8 md:p-12 text-white overflow-hidden relative">
+              <div className="relative z-10 max-w-2xl">
+                <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm text-white text-xs font-medium px-3 py-1.5 rounded-full mb-5">
+                  <span className="w-1.5 h-1.5 bg-white rounded-full"></span>
+                  New Report
+                </div>
+                <h2 className="text-2xl md:text-4xl font-bold mb-4 tracking-tight leading-tight">
+                  Dubai Real Estate Market Report
+                </h2>
+                <p className="text-base md:text-lg text-white/90 mb-3">
+                  Q3 2026 · July – September
+                </p>
+                <p className="text-sm md:text-base text-white/80 mb-8 leading-relaxed">
+                  Complete quarterly analysis of Dubai property sales: total
+                  volume, median prices, top 20 areas, and off-plan trends —
+                  from 30,000+ registered DLD transactions.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <Link
+                    href="/reports/q3-2026"
+                    className="inline-flex items-center justify-center bg-white text-blue-700 hover:bg-blue-50 font-semibold px-6 py-3 rounded-lg transition text-sm"
+                  >
+                    Read Full Report →
+                  </Link>
+                  <Link
+                    href="/reports"
+                    className="inline-flex items-center justify-center bg-blue-500/30 hover:bg-blue-500/50 backdrop-blur-sm text-white font-semibold px-6 py-3 rounded-lg transition text-sm border border-white/20"
+                  >
+                    All Reports
+                  </Link>
+                </div>
+              </div>
 
+              {/* Decorative background */}
+              <div className="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/3"></div>
+              <div className="absolute bottom-0 right-24 w-64 h-64 bg-white/5 rounded-full translate-y-1/2"></div>
+            </div>
+          </div>
+        </section>
         {/* What We Are / Are Not */}
         <section className="py-12 md:py-20">
           <div className="max-w-5xl mx-auto px-4 md:px-6">

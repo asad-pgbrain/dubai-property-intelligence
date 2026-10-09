@@ -10,6 +10,7 @@ const NAV_ITEMS = [
   { href: "/areas", label: "Areas" },
   { href: "/compare", label: "Compare" },
   { href: "/calculators/rental-yield", label: "Yield" },
+  { href: "/reports", label: "Reports" },
   { href: "/methodology", label: "Methodology" },
 ];
 

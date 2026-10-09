@@ -27,7 +27,21 @@ export default function Footer() {
               </li>
             </ul>
           </div>
-
+              <li>
+                <Link href="/rents" className="hover:text-zinc-900">
+                  Rents
+                </Link>
+              </li>
+              <li>
+                <Link href="/calculators/rental-yield" className="hover:text-zinc-900">
+                  Yield Calculator
+                </Link>
+              </li>
+              <li>
+                <Link href="/reports" className="hover:text-zinc-900">
+                  Reports
+                </Link>
+              </li>
           <div>
             <h3 className="text-xs font-semibold text-zinc-900 uppercase tracking-wide mb-3">
               Trust
