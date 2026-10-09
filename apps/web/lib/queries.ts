@@ -463,7 +463,88 @@ export async function compareMonthly(areas: string[]) {
 
   return { data: rows, count: rows.length };
 }
+// ============================================================
+// Rental Yield Calculator
+// ============================================================
+interface YieldAreaRow {
+  area_name: string;
+  property_sub_type: string;
+  sale_count: number;
+  median_sale_price: number;
+  median_aed_sqft: number;
+  rent_count: number;
+  median_annual_rent: number;
+  gross_yield_pct: number;
+  data_coverage: string;
+}
 
+export async function getRentalYield(
+  areaName: string,
+  propertyType: string = "Flat"
+) {
+  // Try combined group first (handles Dubai Marina → Marsa Dubai etc.)
+  const groupRows = (await sql`
+    SELECT
+      group_name AS area_name,
+      property_sub_type,
+      sale_count,
+      median_sale_price,
+      median_aed_sqft,
+      rent_count,
+      median_annual_rent,
+      gross_yield_pct,
+      data_coverage
+    FROM analytics.area_group_yield
+    WHERE LOWER(group_name) = LOWER(${areaName})
+      AND property_sub_type = ${propertyType}
+  `) as YieldAreaRow[];
+
+  if (groupRows.length > 0) return groupRows[0];
+
+  // Fallback to direct area match
+  const directRows = (await sql`
+    SELECT
+      area_name,
+      property_sub_type,
+      sale_count,
+      median_sale_price,
+      median_aed_sqft,
+      rent_count,
+      median_annual_rent,
+      gross_yield_pct,
+      data_coverage
+    FROM analytics.area_yield_summary
+    WHERE UPPER(TRIM(area_name)) = UPPER(TRIM(${areaName}))
+      AND property_sub_type = ${propertyType}
+  `) as YieldAreaRow[];
+
+  if (directRows.length > 0) return directRows[0];
+
+  return null;
+}
+
+// ============================================================
+// Top Yield Areas (for rankings / discovery)
+// ============================================================
+export async function getTopYieldAreas(limit = 20) {
+  const rows = (await sql`
+    SELECT
+      area_name,
+      property_sub_type,
+      median_sale_price,
+      median_annual_rent,
+      gross_yield_pct,
+      data_coverage
+    FROM analytics.area_yield_summary
+    WHERE gross_yield_pct BETWEEN 3 AND 12
+      AND data_coverage IN ('High', 'Medium')
+      AND median_sale_price >= 300000
+    ORDER BY gross_yield_pct DESC
+    LIMIT ${limit}
+  `) as YieldAreaRow[];
+
+  return rows;
+}
 // ============================================================
 // Reality Check
 // ============================================================

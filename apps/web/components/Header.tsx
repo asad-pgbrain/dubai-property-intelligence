@@ -8,6 +8,7 @@ const NAV_ITEMS = [
   { href: "/market", label: "Market" },
   { href: "/areas", label: "Areas" },
   { href: "/compare", label: "Compare" },
+  { href: "/calculators/rental-yield", label: "Yield Calculator" },
   { href: "/methodology", label: "Methodology" },
 ];
 
