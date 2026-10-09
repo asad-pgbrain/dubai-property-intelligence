@@ -823,3 +823,133 @@ export async function getRentsOverview() {
     source: { name: "Dubai Land Department", dataset: "Rents" },
   };
 }
+// ============================================================
+// Market Report — Q3 2026
+// ============================================================
+interface ReportStats {
+  total_sales: number;
+  total_volume: number;
+  median_price: number;
+  median_aed_sqft: number;
+  first_date: string;
+  last_date: string;
+  areas_count: number;
+}
+
+interface ReportAreaRow {
+  area_name: string;
+  sale_count: number;
+  median_price_aed: number;
+  median_aed_sqft: number;
+  total_volume: number;
+}
+
+interface ReportMonthlyRow {
+  month: string;
+  sale_count: number;
+  volume_aed: number;
+  median_price_aed: number;
+}
+
+interface ReportOffPlanRow {
+  is_offplan: string;
+  sale_count: number;
+  median_price_aed: number;
+  median_aed_sqft: number;
+}
+
+export async function getQ3Report() {
+  const startDate = "2026-07-01";
+  const endDate = "2026-10-01";
+
+  const statsRows = (await sql`
+    SELECT
+      COUNT(*)::int AS total_sales,
+      ROUND(SUM(amount))::bigint AS total_volume,
+      ROUND(PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY amount)::numeric)::bigint AS median_price,
+      ROUND(PERCENTILE_CONT(0.5) WITHIN GROUP (
+        ORDER BY amount / NULLIF(property_size_sqm * 10.7639104167, 0)
+      )::numeric)::bigint AS median_aed_sqft,
+      MIN(transaction_date)::text AS first_date,
+      MAX(transaction_date)::text AS last_date,
+      COUNT(DISTINCT area_id)::int AS areas_count
+    FROM core.transactions
+    WHERE transaction_type = 'Sales'
+      AND amount > 0
+      AND property_size_sqm > 0
+      AND transaction_date >= ${startDate}
+      AND transaction_date < ${endDate}
+  `) as ReportStats[];
+
+  const topAreas = (await sql`
+    SELECT
+      a.normalized_name AS area_name,
+      COUNT(*)::int AS sale_count,
+      ROUND(PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY t.amount)::numeric)::bigint AS median_price_aed,
+      ROUND(PERCENTILE_CONT(0.5) WITHIN GROUP (
+        ORDER BY t.amount / NULLIF(t.property_size_sqm * 10.7639104167, 0)
+      )::numeric)::bigint AS median_aed_sqft,
+      ROUND(SUM(t.amount))::bigint AS total_volume
+    FROM core.transactions t
+    JOIN core.areas a ON t.area_id = a.area_id
+    WHERE t.transaction_type = 'Sales'
+      AND t.amount > 0
+      AND t.property_size_sqm > 0
+      AND t.transaction_date >= ${startDate}
+      AND t.transaction_date < ${endDate}
+    GROUP BY a.normalized_name
+    ORDER BY sale_count DESC
+    LIMIT 20
+  `) as ReportAreaRow[];
+
+  const monthly = (await sql`
+    WITH m AS (
+      SELECT
+        DATE_TRUNC('month', transaction_date) AS month_ts,
+        COUNT(*)::int AS sale_count,
+        ROUND(SUM(amount))::bigint AS volume_aed,
+        ROUND(PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY amount)::numeric)::bigint AS median_price_aed
+      FROM core.transactions
+      WHERE transaction_type = 'Sales'
+        AND amount > 0
+        AND transaction_date >= ${startDate}
+        AND transaction_date < ${endDate}
+      GROUP BY DATE_TRUNC('month', transaction_date)
+    )
+    SELECT
+      TO_CHAR(month_ts, 'YYYY-MM-DD') AS month,
+      sale_count,
+      volume_aed,
+      median_price_aed
+    FROM m
+    ORDER BY month_ts
+  `) as ReportMonthlyRow[];
+
+  const offplan = (await sql`
+    SELECT
+      is_offplan,
+      COUNT(*)::int AS sale_count,
+      ROUND(PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY amount)::numeric)::bigint AS median_price_aed,
+      ROUND(PERCENTILE_CONT(0.5) WITHIN GROUP (
+        ORDER BY amount / NULLIF(property_size_sqm * 10.7639104167, 0)
+      )::numeric)::bigint AS median_aed_sqft
+    FROM core.transactions
+    WHERE transaction_type = 'Sales'
+      AND amount > 0
+      AND property_size_sqm > 0
+      AND is_offplan IS NOT NULL
+      AND transaction_date >= ${startDate}
+      AND transaction_date < ${endDate}
+    GROUP BY is_offplan
+    ORDER BY sale_count DESC
+  `) as ReportOffPlanRow[];
+
+  return {
+    period: "Q3 2026 (July–September)",
+    stats: statsRows[0],
+    top_areas: topAreas,
+    monthly_trend: monthly,
+    offplan_split: offplan,
+    source: { name: "Dubai Land Department", dataset: "Transactions" },
+  };
+}
