@@ -19,7 +19,8 @@ dist/
 build/
 
 # Data (raw files git mein nahi)
-data/raw/
+data/raw/*
+!data/raw/**/PROVENANCE.md
 data/processed/
 data/quarantine/
 
