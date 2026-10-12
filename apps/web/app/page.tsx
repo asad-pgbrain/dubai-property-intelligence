@@ -102,7 +102,7 @@ export default async function Home() {
                 </div>
                 <h3 className="font-semibold text-zinc-900 mb-2">Reality Check</h3>
                 <p className="text-sm text-zinc-600 leading-relaxed">
-                  Compare any asking price against 161,000+ actual registered sales in seconds.
+                  Compare any asking price against {DATA_STATS.totalSales.toLocaleString()} actual registered sales in seconds.
                 </p>
               </div>
 
@@ -162,7 +162,7 @@ export default async function Home() {
                 </div>
                 <h3 className="font-semibold text-zinc-900 mb-2">We find comparable sales</h3>
                 <p className="text-sm text-zinc-600 leading-relaxed">
-                  Our system searches 161,000+ DLD transactions for similar properties.
+                  Our system searches {DATA_STATS.totalSales.toLocaleString()} DLD transactions for similar properties.
                 </p>
               </div>
 
@@ -378,7 +378,7 @@ export default async function Home() {
               </div>
               <div className="text-center">
                 <div className="text-2xl md:text-3xl font-bold text-zinc-900 mb-1">
-                  273
+                  {DATA_STATS.totalAreas}
                 </div>
                 <div className="text-xs text-zinc-500 uppercase tracking-wide">
                   Dubai areas covered

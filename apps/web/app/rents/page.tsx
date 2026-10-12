@@ -4,6 +4,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import RentsChart from "@/components/RentsChart";
 import { getRentsOverview } from "@/lib/queries";
+import { DATA_STATS } from "@/lib/constants";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 3600;
@@ -11,13 +12,13 @@ export const revalidate = 3600;
 export const metadata: Metadata = {
   title: "Dubai Rental Market Overview 2026",
   description:
-    "Dubai rental market data: median rents, contract volumes, and top areas. Based on 857,000+ registered rental contracts from the Dubai Land Department.",
+    `Dubai rental market data: median rents, contract volumes, and top areas. Based on ${DATA_STATS.totalRents.toLocaleString()}+ registered rental contracts from the Dubai Land Department.`,
   openGraph: {
     type: "website",
     url: "https://dubai-property-intelligence-apps.vercel.app/rents",
     title: "Dubai Rental Market 2026 | DPI",
     description:
-      "857,000+ registered rental contracts. Median rents by area from DLD.",
+      `${DATA_STATS.totalRents.toLocaleString()}+ registered rental contracts. Median rents by area from DLD.`,
   },
 };
 

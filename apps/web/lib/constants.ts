@@ -3,13 +3,22 @@
  * Update these whenever new DLD data is loaded.
  */
 export const DATA_STATS = {
+  // Sales
   totalSales: 124395,
-  totalAreas: 246,
   totalVolumeAed: 382153180098,
   medianPriceAed: 1418000,
+  salesAreas: 246,
+
+  // Rents
+  totalRents: 857624,
+  rentAreas: 304,
+
+  // Coverage
   periodStart: "2026-01-01",
   periodEnd: "2026-10-02",
   periodLabel: "Jan–Oct 2026",
+
+  // Source
   source: "Dubai Land Department",
 } as const;
 
