@@ -7,7 +7,8 @@ export const DATA_STATS = {
   totalSales: 124395,
   totalVolumeAed: 382153180098,
   medianPriceAed: 1418000,
-  salesAreas: 246,
+  totalAreas: 246,          // For sales context (used everywhere)
+  salesAreas: 246,          // Alias (same value)
 
   // Rents
   totalRents: 857624,
