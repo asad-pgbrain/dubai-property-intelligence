@@ -57,8 +57,8 @@ export default async function MarketPage() {
               ? `Snapshot of ${data.stats.total_transactions.toLocaleString()} registered sales across ${data.stats.areas_count} Dubai areas, from ${data.stats.first_date} to ${data.stats.last_date}.`
               : "Real market data from the Dubai Land Department."}
           </p>
-        </div>
           <p className="text-xs text-zinc-500 mt-2">Residential units only (apartments and villas). Excludes buildings, land, and commercial.</p>
+        </div>
 
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg mb-6">
