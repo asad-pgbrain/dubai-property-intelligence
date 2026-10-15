@@ -253,8 +253,6 @@ export async function getMarketOverview() {
     WHERE transaction_type = 'Sales'
       AND amount > 0
       AND property_type = 'Unit'
-      AND usage = 'Residential'
-      AND property_sub_type IN ('Flat', 'Villa', 'Studio', 'Penthouse', 'Hotel Apartment')
   `) as StatsRow[];
 
   const topAreas = (await sql`
@@ -268,8 +266,6 @@ export async function getMarketOverview() {
     WHERE t.transaction_type = 'Sales'
       AND t.amount > 0
       AND t.property_type = 'Unit'
-      AND t.usage = 'Residential'
-      AND t.property_sub_type IN ('Flat', 'Villa', 'Studio', 'Penthouse', 'Hotel Apartment')
     GROUP BY a.normalized_name
     ORDER BY transaction_count DESC
     LIMIT 10
@@ -286,8 +282,6 @@ export async function getMarketOverview() {
       WHERE transaction_type = 'Sales'
         AND amount > 0
         AND property_type = 'Unit'
-        AND usage = 'Residential'
-        AND property_sub_type IN ('Flat', 'Villa', 'Studio', 'Penthouse', 'Hotel Apartment')
       GROUP BY DATE_TRUNC('month', transaction_date)
     )
     SELECT
