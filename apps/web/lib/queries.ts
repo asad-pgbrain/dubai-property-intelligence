@@ -778,6 +778,8 @@ export async function getRentsOverview() {
     FROM core.rent_transactions
     WHERE annual_amount > 0
       AND usage = 'Residential'
+      AND property_sub_type IN ('Flat', 'Villa', 'Studio', 'Penthouse', 'Hotel Apartment')
+      AND property_size_sqm BETWEEN 20 AND 1000
   `) as RentsStats[];
 
   const topAreas = (await sql`
@@ -790,6 +792,8 @@ export async function getRentsOverview() {
     JOIN core.areas a ON r.area_id = a.area_id
     WHERE r.annual_amount > 0
       AND r.usage = 'Residential'
+      AND r.property_sub_type IN ('Flat', 'Villa', 'Studio', 'Penthouse', 'Hotel Apartment')
+      AND r.property_size_sqm BETWEEN 20 AND 1000
     GROUP BY a.normalized_name
     ORDER BY rent_count DESC
     LIMIT 10
@@ -805,6 +809,8 @@ export async function getRentsOverview() {
       FROM core.rent_transactions
       WHERE annual_amount > 0
         AND usage = 'Residential'
+        AND property_sub_type IN ('Flat', 'Villa', 'Studio', 'Penthouse', 'Hotel Apartment')
+        AND property_size_sqm BETWEEN 20 AND 1000
       GROUP BY DATE_TRUNC('month', registration_date)
     )
     SELECT
@@ -823,6 +829,8 @@ export async function getRentsOverview() {
     source: { name: "Dubai Land Department", dataset: "Rents" },
   };
 }
+      
+    
 // ============================================================
 // Market Report — Q3 2026
 // ============================================================

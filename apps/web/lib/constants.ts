@@ -3,16 +3,16 @@
  * Update these whenever new DLD data is loaded.
  */
 export const DATA_STATS = {
-  // Sales
+  // Sales (Unit only, Jan-Oct 2026)
   totalSales: 124395,
   totalVolumeAed: 382153180098,
   medianPriceAed: 1418000,
-  totalAreas: 246,          // For sales context (used everywhere)
-  salesAreas: 246,          // Alias (same value)
+  totalAreas: 246,
+  salesAreas: 246,
 
-  // Rents
-  totalRents: 857624,
-  rentAreas: 304,
+  // Rents (Residential only — Flat, Villa, Studio, Penthouse)
+  totalRents: 657971,       // ← Residential only
+  rentAreas: 181,           // ← Residential only
 
   // Coverage
   periodStart: "2026-01-01",
