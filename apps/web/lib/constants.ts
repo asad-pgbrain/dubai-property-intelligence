@@ -1,7 +1,3 @@
-/**
- * Site-wide data constants.
- * Update these whenever new DLD data is loaded.
- */
 export const DATA_STATS = {
   // Sales (Unit only, Jan-Oct 2026)
   totalSales: 124395,
@@ -10,9 +6,9 @@ export const DATA_STATS = {
   totalAreas: 246,
   salesAreas: 246,
 
-  // Rents (Residential only — Flat, Villa, Studio, Penthouse)
-  totalRents: 657971,       // ← Residential only
-  rentAreas: 181,           // ← Residential only
+  // Rents (Residential only — Flat, Villa, Studio, Penthouse, Hotel Apartment)
+  totalRents: 537945,       // ← Actual filtered
+  rentAreas: 177,           // ← Actual filtered
 
   // Coverage
   periodStart: "2026-01-01",

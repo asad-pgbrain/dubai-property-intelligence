@@ -260,7 +260,7 @@ export default async function Home() {
                 <p className="text-sm md:text-base text-white/80 mb-8 leading-relaxed">
                   Complete quarterly analysis of Dubai property sales: total
                   volume, median prices, top 20 areas, and off-plan trends —
-                  from 30,000+ registered DLD transactions.
+                  from 37,314 registered DLD transactions.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-3">
                   <Link
