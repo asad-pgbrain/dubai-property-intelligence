@@ -1,10 +1,10 @@
 export const DATA_STATS = {
   // Sales (Unit only, Jan-Oct 2026)
-  totalSales: 124395,
+  totalSales: 104605,
   totalVolumeAed: 382153180098,
-  medianPriceAed: 1418000,
-  totalAreas: 246,
-  salesAreas: 246,
+  medianPriceAed: 1244025,
+  totalAreas: 125,
+  salesAreas: 125,
 
   // Rents (Residential only — Flat, Villa, Studio, Penthouse, Hotel Apartment)
   totalRents: 537945,       // ← Actual filtered
