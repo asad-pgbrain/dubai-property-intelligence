@@ -250,7 +250,11 @@ export async function getMarketOverview() {
       MAX(transaction_date)::text AS last_date,
       COUNT(DISTINCT area_id)::int AS areas_count
     FROM core.transactions
-    WHERE transaction_type = 'Sales' AND amount > 0
+    WHERE transaction_type = 'Sales'
+      AND amount > 0
+      AND property_type = 'Unit'
+      AND usage = 'Residential'
+      AND property_sub_type IN ('Flat', 'Villa', 'Studio', 'Penthouse', 'Hotel Apartment')
   `) as StatsRow[];
 
   const topAreas = (await sql`
@@ -261,7 +265,11 @@ export async function getMarketOverview() {
       ROUND(SUM(t.amount))::bigint AS volume_aed
     FROM core.transactions t
     JOIN core.areas a ON t.area_id = a.area_id
-    WHERE t.transaction_type = 'Sales' AND t.amount > 0
+    WHERE t.transaction_type = 'Sales'
+      AND t.amount > 0
+      AND t.property_type = 'Unit'
+      AND t.usage = 'Residential'
+      AND t.property_sub_type IN ('Flat', 'Villa', 'Studio', 'Penthouse', 'Hotel Apartment')
     GROUP BY a.normalized_name
     ORDER BY transaction_count DESC
     LIMIT 10
@@ -275,7 +283,11 @@ export async function getMarketOverview() {
         ROUND(SUM(amount))::bigint AS volume_aed,
         ROUND(PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY amount)::numeric)::bigint AS median_price_aed
       FROM core.transactions
-      WHERE transaction_type = 'Sales' AND amount > 0
+      WHERE transaction_type = 'Sales'
+        AND amount > 0
+        AND property_type = 'Unit'
+        AND usage = 'Residential'
+        AND property_sub_type IN ('Flat', 'Villa', 'Studio', 'Penthouse', 'Hotel Apartment')
       GROUP BY DATE_TRUNC('month', transaction_date)
     )
     SELECT
@@ -294,6 +306,8 @@ export async function getMarketOverview() {
     source: { name: "Dubai Land Department", dataset: "Transactions" },
   };
 }
+    
+     
 
 // ============================================================
 // Areas List

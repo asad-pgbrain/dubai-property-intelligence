@@ -7,7 +7,7 @@ import { getMarketOverview } from "@/lib/queries";
 export const metadata: Metadata = {
   title: "Dubai Property Market Overview 2026",
   description:
-    "Dubai real estate market overview: total transactions, median prices, monthly trends, and top areas. Based on 124,395 registered DLD sales.",
+    "Dubai residential property market overview: 124,395 unit sales across 246 areas. Median prices, monthly trends, and top areas from official DLD data.",
   openGraph: {
     type: "website",
     url: "https://dubai-property-intelligence-apps.vercel.app/market",
@@ -58,6 +58,7 @@ export default async function MarketPage() {
               : "Real market data from the Dubai Land Department."}
           </p>
         </div>
+          <p className="text-xs text-zinc-500 mt-2">Residential units only (apartments and villas). Excludes buildings, land, and commercial.</p>
 
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg mb-6">
