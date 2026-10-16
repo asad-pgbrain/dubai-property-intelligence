@@ -65,8 +65,11 @@ export async function getAreaBedroomSplit(areaName: string) {
     WHERE UPPER(TRIM(a.normalized_name)) = UPPER(TRIM(${areaName}))
       AND t.transaction_type = 'Sales'
       AND t.amount > 0
+      AND t.property_type = 'Unit'
+      AND t.property_sub_type = 'Flat'
       AND t.rooms IS NOT NULL
-      AND t.property_size_sqm > 0
+      AND t.property_size_sqm BETWEEN 20 AND 500
+      AND (t.amount / NULLIF(t.property_size_sqm * 10.7639104167, 0)) BETWEEN 200 AND 10000
     GROUP BY rooms
     HAVING COUNT(*) >= 5
     ORDER BY transaction_count DESC
@@ -428,7 +431,7 @@ export async function compareAreas(areas: string[]) {
     FROM analytics.area_market_summary s
     LEFT JOIN analytics.area_yield_summary r
       ON UPPER(TRIM(s.area_name)) = UPPER(TRIM(r.area_name))
-      AND s.property_type = r.property_sub_type
+      AND r.property_sub_type = 'Flat' 
     WHERE UPPER(TRIM(s.area_name)) = ANY(${normalized})
       AND s.property_type = 'Unit'
     ORDER BY s.transaction_count DESC

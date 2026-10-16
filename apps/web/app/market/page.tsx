@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import Header from "@/components/Header";
+import Footer from "@/components/Footer";
 import MonthlyChart from "@/components/MonthlyChart";
 import { getMarketOverview } from "@/lib/queries";
 import { DATA_STATS } from "@/lib/constants";
@@ -244,6 +245,8 @@ export default async function MarketPage() {
           </>
         )}
       </main>
+
+      <Footer />
     </div>
   );
 }

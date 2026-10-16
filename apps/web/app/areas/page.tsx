@@ -2,6 +2,7 @@ import { DATA_STATS } from "@/lib/constants";
 import type { Metadata } from "next";
 import Link from "next/link";
 import Header from "@/components/Header";
+import Footer from "@/components/Footer";
 import { listAreas } from "@/lib/queries";
 
 export const metadata: Metadata = {
@@ -178,6 +179,8 @@ export default async function AreasPage() {
           Source: Dubai Land Department - Transactions dataset. Sales only.
         </div>
       </main>
+
+      <Footer />
     </div>
   );
 }
