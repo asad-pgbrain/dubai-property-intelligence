@@ -61,8 +61,9 @@ export default async function RentalYieldPage() {
 
         <RentalYieldCalculator />
 
-        {/* Top yield areas */}
-        {topYields.length > 0 && (
+        {/* Top yield areas — HIDDEN: data validation pending (see methodology) */}
+        {/* Re-enable after matching bedrooms + sub-types + ready-only sales */}
+        {false && topYields.length > 0 && (
           <section className="mt-12 md:mt-16">
             <div className="mb-5">
               <h2 className="text-xl md:text-2xl font-bold text-zinc-900 tracking-tight">
