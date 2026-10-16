@@ -117,8 +117,9 @@ export default async function AreaDetailPage({ params }: PageProps) {
     detail.data.find((d: any) => d.property_type === "Unit") || detail.data[0];
 
   const offplanTotal = offplan.reduce((sum, r) => sum + r.transaction_count, 0);
+  const offplanRow = offplan.find((r: any) => r.is_offplan === "Off-Plan");
   const offplanPct = offplanTotal
-    ? Math.round((offplan[0]?.transaction_count / offplanTotal) * 100)
+    ? Math.round(((offplanRow?.transaction_count || 0) / offplanTotal) * 100)
     : 0;
 
   const bedroomTotal = bedrooms.reduce((sum, r) => sum + r.transaction_count, 0);
@@ -354,13 +355,16 @@ export default async function AreaDetailPage({ params }: PageProps) {
                         Est. Gross Yield
                       </div>
                       <div className="text-sm md:text-base font-semibold text-emerald-600">
-                        {primary && primary.median_price_aed
+                        {row.property_sub_type === "Flat" &&
+                        row.rent_count >= 30 &&
+                        primary &&
+                        primary.median_price_aed
                           ? `${(
                               (Number(row.median_annual_rent) /
                                 Number(primary.median_price_aed)) *
                               100
                             ).toFixed(2)}%`
-                          : "-"}
+                          : "—"}
                       </div>
                     </div>
                   </div>
@@ -369,9 +373,9 @@ export default async function AreaDetailPage({ params }: PageProps) {
             </div>
 
             <div className="px-4 md:px-6 py-3 bg-zinc-50 border-t border-zinc-100 text-[11px] text-zinc-500">
-              Yield estimate uses median sale price for{" "}
-              {primary?.property_type || "Unit"}. For interactive calculation,
-              use the{" "}
+              Yield estimate shown for Flats with 30+ contracts only. Uses
+              median Unit sale price as denominator. For interactive
+              calculation, use the{" "}
               <Link
                 href="/calculators/rental-yield"
                 className="text-blue-600 hover:underline"
@@ -811,27 +815,29 @@ export default async function AreaDetailPage({ params }: PageProps) {
                 </div>
               )}
 
-              {primary && rentData.length > 0 && (
-                <div>
-                  <h3 className="font-semibold text-zinc-900 text-sm md:text-base mb-2">
-                    What is the typical rental yield in {nameInfo.primary}?
-                  </h3>
-                  <p className="text-sm text-zinc-600 leading-relaxed">
-                    Based on median sale price and median rent, the estimated
-                    gross rental yield in {nameInfo.primary} is approximately{" "}
-                    {(
-                      (Number(
-                        rentData.find(
-                          (r: any) => r.property_sub_type === "Flat"
-                        )?.median_annual_rent || rentData[0]?.median_annual_rent
-                      ) /
-                        Number(primary.median_price_aed)) *
-                      100
-                    ).toFixed(2)}
-                    %.
-                  </p>
-                </div>
-              )}
+              {primary && rentData.length > 0 && (() => {
+                const flatRent = rentData.find(
+                  (r: any) => r.property_sub_type === "Flat"
+                );
+                const hasEnoughData =
+                  flatRent && flatRent.rent_count >= 30 && primary.median_price_aed;
+                return (
+                  <div>
+                    <h3 className="font-semibold text-zinc-900 text-sm md:text-base mb-2">
+                      What is the typical rental yield in {nameInfo.primary}?
+                    </h3>
+                    <p className="text-sm text-zinc-600 leading-relaxed">
+                      {hasEnoughData
+                        ? `Based on the median flat sale price and median annual rent, the estimated gross rental yield in ${nameInfo.primary} is approximately ${(
+                            (Number(flatRent.median_annual_rent) /
+                              Number(primary.median_price_aed)) *
+                            100
+                          ).toFixed(2)}%. This is a gross estimate and excludes service charges and other expenses.`
+                        : `Insufficient data to calculate a reliable yield for ${nameInfo.primary}. We require at least 30 registered flat sales and 30 registered rent contracts.`}
+                    </p>
+                  </div>
+                );
+              })()}
 
               {topBedroom && (
                 <div>
