@@ -253,32 +253,133 @@ export default function MethodologyPage() {
 
           <section>
             <h2 className="text-xl font-semibold text-zinc-900 mb-3">
-              5. Data Quality
+              5. Rental Yield Calculation
             </h2>
-            <ul className="list-disc pl-6 space-y-2 text-zinc-700">
-              <li>
-                Every raw file is stored immutably and traced to its source
-                with a SHA-256 checksum.
-              </li>
-              <li>
-                Each database record is linked to its ingestion batch, so any
-                number can be traced back to the exact file and date it came
-                from.
-              </li>
-              <li>
-                Duplicate transaction records are deduplicated using DLD&apos;s
-                official transaction number combined with the transaction date.
-              </li>
-              <li>
-                Records with invalid dates, negative amounts, or zero sizes are
-                quarantined and excluded from analytics.
-              </li>
-            </ul>
+            <div className="text-zinc-700 leading-relaxed space-y-4">
+              <div>
+                <h3 className="font-semibold text-zinc-900 mb-1">
+                  Gross yield formula
+                </h3>
+                <p>
+                  <code className="bg-zinc-100 px-2 py-1 rounded text-sm">
+                    gross_yield = (median annual rent ÷ median sale price) × 100
+                  </code>
+                </p>
+                <p className="mt-2 text-sm text-zinc-500">
+                  This is a gross estimate. It does not include service charges,
+                  maintenance, vacancy, or management fees.
+                </p>
+              </div>
+              <div>
+                <h3 className="font-semibold text-zinc-900 mb-1">
+                  Property type matching
+                </h3>
+                <p>
+                  To avoid comparing different property types (e.g., villa sales
+                  vs. flat rents), we match sales and rents by property sub-type:
+                  Flat ↔ Flat, Villa ↔ Villa, Studio ↔ Studio.
+                </p>
+              </div>
+              <div>
+                <h3 className="font-semibold text-zinc-900 mb-1">
+                  Minimum sample size
+                </h3>
+                <p>
+                  A yield is only calculated where there are at least 5 sales
+                  and 5 rents for the same area and property sub-type. Areas
+                  with insufficient data show a coverage indicator instead.
+                </p>
+              </div>
+              <div>
+                <h3 className="font-semibold text-zinc-900 mb-1">
+                  Data validation status
+                </h3>
+                <p className="text-sm">
+                  The &quot;Highest yields&quot; ranking table is temporarily
+                  hidden pending further validation of bedroom-level and
+                  ready-only comparisons. Interactive yield calculations remain
+                  available via our{" "}
+                  <a
+                    href="/calculators/rental-yield"
+                    className="text-blue-600 hover:underline"
+                  >
+                    Rental Yield Calculator
+                  </a>
+                  .
+                </p>
+              </div>
+            </div>
           </section>
 
           <section>
             <h2 className="text-xl font-semibold text-zinc-900 mb-3">
-              6. Limitations
+              6. Data Quality & Outliers
+            </h2>
+            <div className="text-zinc-700 leading-relaxed space-y-4">
+              <div>
+                <h3 className="font-semibold text-zinc-900 mb-1">
+                  Provenance
+                </h3>
+                <ul className="list-disc pl-6 space-y-2">
+                  <li>
+                    Every raw file is stored immutably and traced to its source
+                    with a SHA-256 checksum.
+                  </li>
+                  <li>
+                    Each database record is linked to its ingestion batch, so any
+                    number can be traced back to the exact file and date it came
+                    from.
+                  </li>
+                  <li>
+                    Duplicate transaction records are deduplicated using DLD&apos;s
+                    official transaction number combined with the transaction date.
+                  </li>
+                  <li>
+                    Records with invalid dates, negative amounts, or zero sizes
+                    are quarantined and excluded from analytics.
+                  </li>
+                </ul>
+              </div>
+              <div>
+                <h3 className="font-semibold text-zinc-900 mb-1">
+                  Sales filters (applied to all price analytics)
+                </h3>
+                <ul className="list-disc pl-6 space-y-1 text-sm">
+                  <li>Property type: <strong>Unit only</strong> (buildings and land excluded)</li>
+                  <li>Transaction type: Sales only (mortgages and gifts excluded)</li>
+                  <li>Size range: 20 – 1,000 sqm</li>
+                  <li>Price per sqft: AED 200 – 10,000</li>
+                  <li>Buyer/seller count: ≤ 3 (excludes bulk portfolio deals)</li>
+                </ul>
+              </div>
+              <div>
+                <h3 className="font-semibold text-zinc-900 mb-1">
+                  Rent filters (applied to all rental analytics)
+                </h3>
+                <ul className="list-disc pl-6 space-y-1 text-sm">
+                  <li>Usage: <strong>Residential</strong> only</li>
+                  <li>
+                    Property sub-type: Flat, Villa, Studio, Penthouse, Hotel
+                    Apartment
+                  </li>
+                  <li>
+                    <strong>Excluded:</strong> Labor camps, staff accommodation,
+                    warehouses, commercial units, industrial spaces
+                  </li>
+                  <li>Size range: 20 – 1,000 sqm</li>
+                </ul>
+                <p className="text-sm text-zinc-500 mt-2">
+                  Bulk worker housing and industrial leases produce
+                  non-residential price patterns. Including them would distort
+                  rental medians and yields.
+                </p>
+              </div>
+            </div>
+          </section>
+
+          <section>
+            <h2 className="text-xl font-semibold text-zinc-900 mb-3">
+              7. Limitations
             </h2>
             <div className="bg-amber-50 border border-amber-200 rounded-xl p-5 text-amber-900 leading-relaxed space-y-2">
               <p>
@@ -302,7 +403,7 @@ export default function MethodologyPage() {
 
           <section>
             <h2 className="text-xl font-semibold text-zinc-900 mb-3">
-              7. Attribution & Licensing
+              8. Attribution & Licensing
             </h2>
             <p className="text-zinc-700 leading-relaxed">
               DLD data is publicly available. We do not resell raw datasets.
