@@ -52,12 +52,19 @@ export default function MethodologyPage() {
                 , the official government source for registered real estate
                 transactions in Dubai.
               </p>
-              <p>
-                We currently use the <strong>Transactions dataset</strong>,
-                which includes registered sales, mortgages, and gift transfers
-                with fields such as transaction date, property type, area,
-                size, price, and rooms.
-              </p>
+              <p>We currently use two DLD datasets:</p>
+              <ul className="list-disc pl-6 space-y-2 mt-3">
+                <li>
+                  <strong>Transactions dataset</strong> — registered sales,
+                  mortgages, and gift transfers, with fields such as
+                  transaction date, property type, area, size, price, and rooms.
+                </li>
+                <li>
+                  <strong>Rents dataset</strong> — registered rental contracts,
+                  with fields such as registration date, contract start/end dates,
+                  area, property type, size, annual rent, and usage.
+                </li>
+              </ul>
             </div>
           </section>
 
@@ -108,6 +115,50 @@ export default function MethodologyPage() {
                   <dd className="text-zinc-900 font-medium">October 2026</dd>
                 </div>
               </dl>
+            </div>
+          </section>
+
+          <section>
+            <h2 className="text-xl font-semibold text-zinc-900 mb-3">
+              2b. Rents Dataset Coverage
+            </h2>
+            <div className="bg-zinc-50 rounded-xl p-6 border border-zinc-200">
+              <dl className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <dt className="text-xs uppercase tracking-wide text-zinc-500 mb-1">
+                    Dataset
+                  </dt>
+                  <dd className="text-zinc-900 font-medium">Rents</dd>
+                </div>
+                <div>
+                  <dt className="text-xs uppercase tracking-wide text-zinc-500 mb-1">
+                    Period covered
+                  </dt>
+                  <dd className="text-zinc-900 font-medium">
+                    {DATA_STATS.periodLabel}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-xs uppercase tracking-wide text-zinc-500 mb-1">
+                    Residential rents analyzed
+                  </dt>
+                  <dd className="text-zinc-900 font-medium">
+                    {DATA_STATS.totalRents.toLocaleString()}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-xs uppercase tracking-wide text-zinc-500 mb-1">
+                    Areas covered
+                  </dt>
+                  <dd className="text-zinc-900 font-medium">{DATA_STATS.rentAreas}</dd>
+                </div>
+              </dl>
+              <p className="text-xs text-zinc-500 mt-4 leading-relaxed">
+                Residential rents only: flats, villas, studios, penthouses, and
+                hotel apartments. Commercial units, industrial spaces, and bulk
+                worker housing (labor camps, staff accommodation) are excluded
+                from all rental analytics and yield calculations.
+              </p>
             </div>
           </section>
 
