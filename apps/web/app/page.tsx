@@ -9,13 +9,13 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Dubai Property Intelligence — Market Data & Reality Check",
   description:
-    "Check any Dubai property against real market data from the Dubai Land Department. 124,395 registered sales across 246 areas. Free, no ads, no broker money.",
+    `Check any Dubai property against real market data from the Dubai Land Department. ${DATA_STATS.totalSales.toLocaleString()} registered sales across ${DATA_STATS.totalAreas} areas. Free, no ads, no broker money.`,
   openGraph: {
     type: "website",
     url: "https://dubai-property-intelligence-apps.vercel.app",
     title: "Dubai Property Intelligence — Market Data & Reality Check",
     description:
-      "Check any Dubai property against real market data from DLD. 124,395 registered sales.",
+      `Check any Dubai property against real market data from DLD. ${DATA_STATS.totalSales.toLocaleString()} registered sales.`,
   },
 };
 

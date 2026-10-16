@@ -3,17 +3,18 @@ import Link from "next/link";
 import Header from "@/components/Header";
 import MonthlyChart from "@/components/MonthlyChart";
 import { getMarketOverview } from "@/lib/queries";
+import { DATA_STATS } from "@/lib/constants";
 
 export const metadata: Metadata = {
   title: "Dubai Property Market Overview 2026",
   description:
-    "Dubai residential property market overview: 124,395 unit sales across 246 areas. Median prices, monthly trends, and top areas from official DLD data.",
+    `Dubai residential property market overview: ${DATA_STATS.totalSales.toLocaleString()} unit sales across ${DATA_STATS.totalAreas} areas. Median prices, monthly trends, and top areas from official DLD data.`,
   openGraph: {
     type: "website",
     url: "https://dubai-property-intelligence-apps.vercel.app/market",
     title: "Dubai Property Market Overview 2026 | DPI",
     description:
-      "124,395 registered sales, AED 382B volume, 246 areas. Real DLD data.",
+      `${DATA_STATS.totalSales.toLocaleString()} registered sales, ${DATA_STATS.totalAreas} areas. Real DLD data.`,
   },
 };
 

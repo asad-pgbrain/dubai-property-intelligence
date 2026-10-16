@@ -4,6 +4,7 @@ import Footer from "@/components/Footer";
 import RentalYieldCalculator from "@/components/RentalYieldCalculator";
 import { getTopYieldAreas } from "@/lib/queries";
 import Link from "next/link";
+import { DATA_STATS } from "@/lib/constants";
 
 export const dynamic = "force-dynamic";
 
@@ -54,7 +55,7 @@ export default async function RentalYieldPage() {
           <p className="text-sm md:text-base text-zinc-600">
             Calculate gross rental yield for any Dubai area using{" "}
             <strong>real registered transactions and rent contracts</strong>{" "}
-            from the Dubai Land Department — 857,000+ rental records across 200+
+            from the Dubai Land Department — ${DATA_STATS.totalRents.toLocaleString()} rental records across ${DATA_STATS.rentAreas}
             areas.
           </p>
         </div>

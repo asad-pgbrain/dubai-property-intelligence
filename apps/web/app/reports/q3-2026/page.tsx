@@ -17,7 +17,7 @@ export const metadata: Metadata = {
     url: "https://dubai-property-intelligence-apps.vercel.app/reports/q3-2026",
     title: "Dubai Real Estate Market Report — Q3 2026 | DPI",
     description:
-      "Q3 2026 Dubai property market analysis from 30,000+ DLD-registered sales.",
+      "Q3 2026 Dubai property market analysis from 37,314 DLD-registered sales.",
   },
 };
 
