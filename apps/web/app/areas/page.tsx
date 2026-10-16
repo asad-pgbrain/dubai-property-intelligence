@@ -64,7 +64,7 @@ export default async function AreasPage() {
             Median property prices and transaction activity across Dubai communities.
             Based on {DATA_STATS.totalSales.toLocaleString()} registered sales across {DATA_STATS.totalAreas} Dubai areas ({DATA_STATS.periodLabel}).
           </p>
-          <p className="text-xs text-zinc-500 mt-2">Residential units only. Sales data from Dubai Land Department.</p>
+          <p className="text-xs text-zinc-500 mt-2">Units only. Sales data from Dubai Land Department.</p>
         </div>
 
         {error && (
