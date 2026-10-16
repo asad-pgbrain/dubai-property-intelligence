@@ -425,13 +425,18 @@ export async function compareAreas(areas: string[]) {
       s.data_coverage,
       s.first_transaction::text AS first_transaction,
       s.last_transaction::text AS last_transaction,
-      r.rent_count,
-      r.median_annual_rent,
-      r.gross_yield_pct
+      COALESCE(g.rent_count, r.rent_count) AS rent_count,
+      COALESCE(g.median_annual_rent, r.median_annual_rent) AS median_annual_rent,
+      COALESCE(g.gross_yield_pct, r.gross_yield_pct) AS gross_yield_pct
     FROM analytics.area_market_summary s
+    -- Try group-level yield first (e.g., Dubai Marina → Marsa Dubai rent data)
+    LEFT JOIN analytics.area_group_yield g
+      ON UPPER(TRIM(s.area_name)) = UPPER(TRIM(g.group_name))
+      AND g.property_sub_type = 'Flat'
+    -- Fallback to area-level yield
     LEFT JOIN analytics.area_yield_summary r
       ON UPPER(TRIM(s.area_name)) = UPPER(TRIM(r.area_name))
-      AND r.property_sub_type = 'Flat' 
+      AND r.property_sub_type = 'Flat'
     WHERE UPPER(TRIM(s.area_name)) = ANY(${normalized})
       AND s.property_type = 'Unit'
     ORDER BY s.transaction_count DESC
