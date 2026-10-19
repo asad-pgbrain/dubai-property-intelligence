@@ -95,6 +95,25 @@ def main():
         "".join(file_hashes.values()).encode()
     ).hexdigest()
 
+    # IDEMPOTENCY CHECK — skip if this exact file already loaded
+    with engine.connect() as conn:
+        existing = conn.execute(text("""
+            SELECT batch_id FROM audit.ingestion_batches
+            WHERE source_file_sha256 = :hash
+              AND dataset_name = 'Rents'
+              AND status = 'completed'
+            LIMIT 1
+        """), {"hash": combined_hash}).first()
+
+    if existing:
+        print(f"\n⚠️  This file already loaded (batch {existing.batch_id})")
+        print(f"    SHA256: {combined_hash[:16]}...")
+        print(f"    Skipping to avoid duplicates.")
+        print(f"    If reload needed, delete the existing batch row first.")
+        sys.exit(0)
+
+    print(f"\n✅ New file — proceeding to load")
+
     with engine.begin() as conn:
         conn.execute(text("""
             INSERT INTO audit.ingestion_batches
