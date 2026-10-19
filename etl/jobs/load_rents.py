@@ -224,7 +224,6 @@ def main():
            :property_type, :property_sub_type, :rooms, :usage,
            :nearest_metro, :nearest_mall, :nearest_landmark, :parking,
            :unit_count, :master_project, :ingestion_batch_id, :source_record_hash)
-        ON CONFLICT (source_record_hash) DO NOTHING
     """)
 
     inserted = 0
