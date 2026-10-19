@@ -188,6 +188,19 @@ def main():
                 "unit_count": int(row["TOTAL_PROPERTIES"]) if pd.notna(row.get("TOTAL_PROPERTIES")) else None,
                 "master_project": row.get("MASTER_PROJECT_EN") if pd.notna(row.get("MASTER_PROJECT_EN")) else None,
                 "ingestion_batch_id": str(batch_id),
+                "source_record_hash": hashlib.md5(
+                    "|".join([
+                        str(row.get("registration_date", "")),
+                        str(row.get("start_date", "")),
+                        str(row.get("end_date", "")),
+                        str(row.get("CONTRACT_AMOUNT", "")),
+                        str(row.get("ANNUAL_AMOUNT", "")),
+                        str(row.get("area_id", "")),
+                        str(row.get("PROP_SUB_TYPE_EN", "")),
+                        str(row.get("ROOMS", "")),
+                        str(row.get("ACTUAL_AREA", "")),
+                    ]).encode()
+                ).hexdigest(),
             })
         except Exception as e:
             errors += 1
@@ -204,36 +217,45 @@ def main():
            contract_amount, annual_amount, is_freehold, property_size_sqm,
            property_type, property_sub_type, rooms, usage,
            nearest_metro, nearest_mall, nearest_landmark, parking,
-           unit_count, master_project, ingestion_batch_id)
+           unit_count, master_project, ingestion_batch_id, source_record_hash)
         VALUES
           (:registration_date, :start_date, :end_date, :version, :area_id,
            :contract_amount, :annual_amount, :is_freehold, :property_size_sqm,
            :property_type, :property_sub_type, :rooms, :usage,
            :nearest_metro, :nearest_mall, :nearest_landmark, :parking,
-           :unit_count, :master_project, :ingestion_batch_id)
+           :unit_count, :master_project, :ingestion_batch_id, :source_record_hash)
+        ON CONFLICT (source_record_hash) DO NOTHING
     """)
 
     inserted = 0
+    failed_chunks = 0
     chunk_size = 2000
-    with engine.begin() as conn:
-        for i in range(0, len(records), chunk_size):
-            chunk = records[i:i + chunk_size]
-            try:
+    # Each chunk in its own transaction
+    for i in range(0, len(records), chunk_size):
+        chunk = records[i:i + chunk_size]
+        try:
+            with engine.begin() as conn:
                 result = conn.execute(insert_sql, chunk)
-                inserted += result.rowcount
-                if (i // chunk_size) % 50 == 0:
-                    print(f"      Progress: {min(i + chunk_size, len(records)):,} / {len(records):,}")
-            except SQLAlchemyError as e:
-                print(f"      Chunk error: {e}")
-                break
+            inserted += result.rowcount
+            if (i // chunk_size) % 50 == 0:
+                print(f"      Progress: {min(i + chunk_size, len(records)):,} / {len(records):,}")
+        except SQLAlchemyError as e:
+            failed_chunks += 1
+            print(f"      Chunk {i} failed: {e}")
 
-    # Update batch status
+    # Update batch status — reflects actual outcome
+    batch_status = "completed" if failed_chunks == 0 else "partial_failure"
     with engine.begin() as conn:
         conn.execute(text("""
             UPDATE audit.ingestion_batches
-            SET status = 'completed', completed_at = now()
+            SET status = :status, completed_at = now(),
+                error_message = :err
             WHERE batch_id = :batch_id
-        """), {"batch_id": str(batch_id)})
+        """), {
+            "status": batch_status,
+            "err": f"{failed_chunks} chunks failed" if failed_chunks else None,
+            "batch_id": str(batch_id)
+        })
 
     print("\n" + "=" * 70)
     print("ETL COMPLETE")

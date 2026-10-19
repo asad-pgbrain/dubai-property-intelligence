@@ -161,27 +161,36 @@ def main():
 
     inserted = 0
     skipped = 0
+    failed_chunks = 0
     chunk_size = 1000
-    with engine.begin() as conn:
-        for i in range(0, len(records), chunk_size):
-            chunk = records[i:i + chunk_size]
-            try:
+    # Each chunk in its own transaction so a single failure doesn't rollback everything
+    for i in range(0, len(records), chunk_size):
+        chunk = records[i:i + chunk_size]
+        try:
+            with engine.begin() as conn:
                 result = conn.execute(insert_sql, chunk)
-                inserted += result.rowcount
-                skipped += len(chunk) - result.rowcount
-                if (i // chunk_size) % 20 == 0:
-                    print(f"      Progress: {min(i + chunk_size, len(records)):,} / {len(records):,}")
-            except SQLAlchemyError as e:
-                print(f"      Chunk error: {e}")
+            inserted += result.rowcount
+            skipped += len(chunk) - result.rowcount
+            if (i // chunk_size) % 20 == 0:
+                print(f"      Progress: {min(i + chunk_size, len(records)):,} / {len(records):,}")
+        except SQLAlchemyError as e:
+            failed_chunks += 1
+            print(f"      Chunk {i} failed: {e}")
 
-    # 8. Update batch
-    print(f"\n[7/8] Updating batch status...")
+    # 8. Update batch — status reflects actual outcome
+    batch_status = "completed" if failed_chunks == 0 else "partial_failure"
+    print(f"\n[7/8] Updating batch status ({batch_status})...")
     with engine.begin() as conn:
         conn.execute(text("""
             UPDATE audit.ingestion_batches
-            SET status = 'completed', completed_at = now()
+            SET status = :status, completed_at = now(),
+                error_message = :err
             WHERE batch_id = :batch_id
-        """), {"batch_id": str(batch_id)})
+        """), {
+            "status": batch_status,
+            "err": f"{failed_chunks} chunks failed" if failed_chunks else None,
+            "batch_id": str(batch_id)
+        })
 
     print(f"\n[8/8] DONE")
     print("=" * 70)
